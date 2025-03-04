@@ -11,6 +11,7 @@ echo Installing dependencies
 @echo on
 .\venv\Scripts\pip.exe install -r requirements.txt
 .\venv\Scripts\pip.exe install windows-curses
+.\venv\Scripts\pip.exe install geopy
 
 @echo off
 echo
