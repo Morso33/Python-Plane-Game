@@ -1,0 +1,5 @@
+certifi==2025.1.31
+mariadb==1.1.12
+packaging==24.2
+pyproj==3.7.1
+pyshp==2.3.1
