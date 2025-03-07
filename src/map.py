@@ -161,7 +161,7 @@ def get_airport(con, key):
     if coords == None:
         print("Virheellinen ICAO-koodi")
         exit()
-    return coords
+    return [coords[0],coords[1]]
 
 
 
@@ -177,7 +177,7 @@ def compute_geodesic(gps_a, gps_b):
     a = gps_to_usphere(gps_a)
     b = gps_to_usphere(gps_b)
 
-    steps = 5 # Steps in geodesic
+    steps = 15 # Steps in geodesic
 
     for t in range(0, steps+1):
         step = (t/steps);
@@ -331,47 +331,21 @@ class Camera:
         self.bbox = bbox;
 
 
+class MapRenderer:
+    def __init__(self, fb):
+        self.fb = fb
 
-def main():
-    con = mariadb.connect(
-        host='127.0.0.1',
-        port=3306,
-        database='flight_game',
-        user='metropolia',
-        password='metropolia',
-        autocommit=True
-    )
+        # Load map data
+        self.sf_low  = shapefile.Reader("./data/ne_110m_admin_0_countries/ne_110m_admin_0_countries")
+        self.sf_mid  = shapefile.Reader("./data/ne_50m_admin_0_countries/ne_50m_admin_0_countries")
+        #sf_high = shapefile.Reader("./data/ne_10m_admin_0_countries/ne_10m_admin_0_countries")
 
-    # Curses initialization
-    win = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    win.keypad(True)
-    win.clear()
-    curses.curs_set(0)
-    curses.start_color()
-    curses.use_default_colors()
-    # Colors
-    curses.init_pair(2, 9, 0)
-    curses.init_pair(1, 15, 0)
+    def draw(self, cam):
+        sf = self.sf_low
+        fb = self.fb
 
-    # Load map data
-    sf_low  = shapefile.Reader("./data/ne_110m_admin_0_countries/ne_110m_admin_0_countries")
-    sf_mid  = shapefile.Reader("./data/ne_50m_admin_0_countries/ne_50m_admin_0_countries")
-    #sf_high = shapefile.Reader("./data/ne_10m_admin_0_countries/ne_10m_admin_0_countries")
-
-    airport_a = get_airport(con, "EFHK")
-    #airport_b = get_airport(con, "PASC")
-    airport_b = get_airport(con, "KJFK")
-
-    fb = Framebuffer(win)
-    cam = Camera()
-
-    while True:
-        t_start = time.time()
-        sf = sf_low
-        if (cam.zoom < 15.0):
-            sf = sf_mid
+        #if (cam.zoom < 15.0):
+        #    sf = sf_mid
         #if (cam.zoom < 0.5):
         #    sf = sf_high
 
@@ -418,13 +392,70 @@ def main():
                     #fb.pixel(vertex_a)
                     fb.pixel(vertex_b)
 
-        # Crosshair
-        s = 0.01*cam.aspect
-        fb.line((0.49, 0.5), (0.51, 0.5))
-        fb.line((0.5, 0.50+s), (0.5, 0.50-s))
+
+def animate_travel(gfx, cam, a, b, final):
+    anim_t0 = time.time()
+    anim_t1 = anim_t0
+
+    distance = geodesic( (a[1],a[0]), (b[1],b[0]) ).km
+
+    anim_dur = distance / 1000.0
+    while anim_t1 - anim_t0 < anim_dur:
+        anim_t1 = time.time()
+        t = (anim_t1 - anim_t0) / anim_dur
+        cam.gps = [
+            a[0] + t * (b[0] - a[0]),
+            a[1] + t * (b[1] - a[1])
+        ]
+
+        wp = compute_geodesic(cam.gps, final)
+
+        gfx.draw(cam)
+        draw_waypoints(gfx.fb, cam, wp)
+        gfx.fb.scanout()
+        gfx.fb.win.refresh()
+
+def main():
+    con = mariadb.connect(
+        host='127.0.0.1',
+        port=3306,
+        database='flight_game',
+        user='metropolia',
+        password='metropolia',
+        autocommit=True
+    )
+
+    # Curses initialization
+    win = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    win.keypad(True)
+    win.clear()
+    curses.curs_set(0)
+    curses.start_color()
+    curses.use_default_colors()
+    # Colors
+    curses.init_pair(2, 9, 0)
+    curses.init_pair(1, 15, 0)
 
 
-        waypoints = compute_geodesic(airport_a, cam.gps)
+    pos = get_airport(con, "EFHK")
+    #airport_b = get_airport(con, "PASC")
+    #airport_b = get_airport(con, "KJFK")
+
+    fb = Framebuffer(win)
+    cam = Camera()
+
+    gfx = MapRenderer(fb)
+
+
+
+    while True:
+        t_start = time.time()
+
+        gfx.draw(cam)
+
+        waypoints = compute_geodesic(pos, cam.gps)
         draw_waypoints(fb, cam, waypoints)
 
         fb.scanout()
@@ -438,7 +469,8 @@ def main():
 
         win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}, {win.getmaxyx()} {gps_to_mercator(cam.gps)}")
         win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle reprojection")
-        win.addstr(2,0,f"Distance: { geodesic( (airport_a[1],airport_a[0]), (cam.gps[1],cam.gps[0]) ).km }")
+        win.addstr(2,0,f"{pos}")
+        #win.addstr(2,0,f"Distance: { geodesic( (airport_a[1],airport_a[0]), (cam.gps[1],cam.gps[0]) ).km }")
         win.refresh()
 
         # Input handling
@@ -459,6 +491,24 @@ def main():
 
         elif ch == ord("s"):
             cam.gps[1] -= cam.zoom * pan_speed
+
+        elif ch == curses.KEY_ENTER or ch == 10 or ch == 13:
+
+            for gps in waypoints:
+                cam.gps[0] = gps[0]
+                cam.gps[1] = gps[1]
+                gfx.draw(cam)
+                fb.scanout()
+                win.refresh()
+
+        elif ch == ord("l"):
+            final = waypoints[-1].copy()
+            for i in range(1, len(waypoints)):
+                animate_travel(gfx, cam, waypoints[i-1], waypoints[i], final)
+
+        elif ch == ord("e"):
+            pos[0] = cam.gps[0]
+            pos[1] = cam.gps[1]
 
         elif ch == ord("z"):
             cam.zoom *= 2.0
