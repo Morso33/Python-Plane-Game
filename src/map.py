@@ -5,6 +5,8 @@ import array
 import math
 import time
 import curses
+from geopy.distance import great_circle
+from geopy.distance import geodesic
 
 # Coordinate systems
 
@@ -118,7 +120,7 @@ def gps_to_mercator(gps):
     h = 180
     x = gps[0]
 
-    lat = math.radians( max(min(gps[1], 85), -85)  )
+    lat = math.radians( max(min(gps[1], 87), -87)  )
 
     mercN = math.log( math.tan( (math.pi/4) + (lat/2)) )
     y = (w * mercN/(2*math.pi))
@@ -178,6 +180,8 @@ def draw_geodesic(fb, cam, gps_a, gps_b):
 
     last = line_a
 
+    last_gps_x = line_a[0]
+
     steps = 20 # Resolution of the approximation
     for t in range(1, steps+1):
         step = (t/steps);
@@ -190,10 +194,13 @@ def draw_geodesic(fb, cam, gps_a, gps_b):
         ]
 
         vec3_normalize(c)
+        gps = usphere_to_gps(c)
+        clip_c = cam.project_gps( gps )
 
-        clip_c = cam.project_gps( usphere_to_gps(c)  )
-        fb.line(last, clip_c, 1)
+        if abs(last_gps_x - gps[0]) < 45:
+            fb.line(last, clip_c, 1)
         last = clip_c
+        last_gps_x = gps[0]
 
 
 
@@ -213,7 +220,7 @@ class Framebuffer:
     def __init__(self, win):
         self.w = 300
         self.h = 80
-
+        self.buffer = []
         self.win = win
         self.update()
 
@@ -224,10 +231,9 @@ class Framebuffer:
 
     def clear(self):
         self.update()
-        # TODO: Clear, don't recreate
-        self.buffer = []
-        for i in range(0, self.h):
-            self.buffer.append( array.array('i', ([0]*(self.w+1))) )
+        required_len = self.w * self.h
+        if (len(self.buffer) != required_len):
+            self.buffer =  array.array('i', ([0]*(required_len)))
 
     def pixel(self, clip):
         pixel = (clip[0] * self.w, clip[1] * self.h)
@@ -235,7 +241,7 @@ class Framebuffer:
 
     def write_subpixel(self, pixel, data=0):
 
-        if (pixel[0] > self.w or pixel[1] > self.h-1):
+        if (pixel[0] > self.w-1 or pixel[1] > self.h-1):
             return
 
         if (pixel[0] < 0 or pixel[1] < 0):
@@ -247,7 +253,7 @@ class Framebuffer:
             val <<= 1
         if subpixel[1] >= 0.5:
             val <<= 2
-        self.buffer[ int(pixel[1]) ][ int(pixel[0]) ] |= val | (data<<8)
+        self.buffer[ int(pixel[1])*self.w + int(pixel[0]) ] |= val | (data<<8)
 
     # Common DDA line drawing algorithm
     def line(self, clip_a, clip_b, data=0):
@@ -273,6 +279,21 @@ class Framebuffer:
         self.write_subpixel((a[0]*0.5,a[1]*0.5), data)
         self.write_subpixel((b[0]*0.5,b[1]*0.5), data)
 
+    def scanout(self):
+        for x in range(self.w):
+            for y in range(self.h):
+                index = y * self.w + x
+                char = self.buffer[index]
+                block = char & 0xFF
+                match block:
+                    case 0:
+                        self.win.addch(y, x, " ", curses.color_pair(0))
+                    case _:
+                        if (char & 1<<8):
+                            self.win.addch(y, x, lut[block], curses.color_pair(2))
+                        else:
+                            self.win.addch(y, x, lut[block], curses.color_pair(0))
+                self.buffer[index] = 0
 
 
 class Camera:
@@ -310,9 +331,6 @@ class Camera:
 
 
 
-
-
-
 def main():
     con = mariadb.connect(
         host='127.0.0.1',
@@ -339,7 +357,7 @@ def main():
     # Load map data
     sf_low  = shapefile.Reader("./data/ne_110m_admin_0_countries/ne_110m_admin_0_countries")
     sf_mid  = shapefile.Reader("./data/ne_50m_admin_0_countries/ne_50m_admin_0_countries")
-    sf_high = shapefile.Reader("./data/ne_10m_admin_0_countries/ne_10m_admin_0_countries")
+    #sf_high = shapefile.Reader("./data/ne_10m_admin_0_countries/ne_10m_admin_0_countries")
 
     airport_a = get_airport(con, "EFHK")
     #airport_b = get_airport(con, "PASC")
@@ -349,17 +367,17 @@ def main():
     cam = Camera()
 
     while True:
+        t_start = time.time()
         sf = sf_low
         if (cam.zoom < 15.0):
             sf = sf_mid
-        if (cam.zoom < 0.5):
-            sf = sf_high
+        #if (cam.zoom < 0.5):
+        #    sf = sf_high
 
         shapes = sf.shapes()
 
         fb.clear()
         cam.update_clip(fb)
-        t_start = time.time()
 
         for shape in shapes:
 
@@ -384,7 +402,6 @@ def main():
                     point = shape.points[i-1]
                     vertex_b = cam.project_gps(point)
 
-
                     linebbox = (
                         min(vertex_a[0], vertex_b[0]), min(vertex_a[1], vertex_b[1]),
                         max(vertex_a[0], vertex_b[0]), max(vertex_a[1], vertex_b[1]),
@@ -397,7 +414,7 @@ def main():
                         continue
 
                     fb.line(vertex_a, vertex_b)
-                    fb.pixel(vertex_a)
+                    #fb.pixel(vertex_a)
                     fb.pixel(vertex_b)
 
         # Crosshair
@@ -407,23 +424,8 @@ def main():
 
         draw_geodesic(fb, cam, airport_a, cam.gps)
 
-        # Scan out the framebuffer, TODO: Move to framebuffer class
-        row = 0
-        for line in fb.buffer:
-            col = 0
-            for char in line:
-                block = char & 0xFF
-                match block:
-                    case 0:
-                        win.addch(row, col, " ", curses.color_pair(0))
-                    case _:
-                        if (char & 1<<8):
-                            win.addch(row, col, lut[block], curses.color_pair(2))
-                        else:
-                            win.addch(row, col, lut[block], curses.color_pair(0))
+        fb.scanout()
 
-                col += 1
-            row += 1
 
         t_end = time.time()
 
@@ -432,26 +434,28 @@ def main():
         #put_gps_text(fb, cam, airport_a, "EFHK")
 
         win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}, {win.getmaxyx()} {gps_to_mercator(cam.gps)}")
-        win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle projection")
+        win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle reprojection")
+        win.addstr(2,0,f"Distance: { geodesic( (airport_a[1],airport_a[0]), (cam.gps[1],cam.gps[0]) ).km }")
         win.refresh()
 
         # Input handling
         # Python is stupid
+        pan_speed = 0.1
         ch = win.getch()
         if ch == ord("q"):
             break
 
         elif ch == ord("a"):
-            cam.gps[0] -= cam.zoom * 0.25
+            cam.gps[0] -= cam.zoom * pan_speed
 
         elif ch == ord("d"):
-            cam.gps[0] += cam.zoom * 0.25
+            cam.gps[0] += cam.zoom * pan_speed
 
         elif ch == ord("w"):
-            cam.gps[1] += cam.zoom * 0.25
+            cam.gps[1] += cam.zoom * pan_speed
 
         elif ch == ord("s"):
-            cam.gps[1] -= cam.zoom * 0.25
+            cam.gps[1] -= cam.zoom * pan_speed
 
         elif ch == ord("z"):
             cam.zoom *= 2.0
@@ -469,19 +473,6 @@ def main():
     curses.echo()
     curses.endwin()
 
-def test():
-    print("test")
-    con = mariadb.connect(
-        host='127.0.0.1',
-        port=3306,
-        database='flight_game',
-        user='metropolia',
-        password='metropolia',
-        autocommit=True
-    )
-
-    print("ok")
-    exit()
 
 if __name__ == "__main__":
     main()
