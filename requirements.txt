@@ -1,4 +1,6 @@
 certifi==2025.1.31
+geographiclib==2.0
+geopy==2.4.1
 mariadb==1.1.12
 packaging==24.2
 pyproj==3.7.1
