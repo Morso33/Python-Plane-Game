@@ -167,7 +167,7 @@ def get_airport(con, key):
 
 
 
-# "In geometry, a geodesic is a curve representing in some sense the locally
+# "In geometry, a geodesic is a curve representing the locally
 # shortest path (arc) between two points in a surface" - Wikipedia
 # This is ultimately just a bad sphere lerp
 
@@ -177,16 +177,17 @@ def compute_geodesic(gps_a, gps_b):
     a = gps_to_usphere(gps_a)
     b = gps_to_usphere(gps_b)
 
-    steps = 15 # Steps in geodesic
+    # Resolution of geodesic
+    steps = 15
 
-    for t in range(0, steps+1):
-        step = (t/steps);
+    for step in range(0, steps+1):
+        t = (step/steps);
 
         # Interpolate between two vectors
         c = [
-            a[0] + step * (b[0] - a[0]),
-            a[1] + step * (b[1] - a[1]),
-            a[2] + step * (b[2] - a[2]),
+            a[0] + t * (b[0] - a[0]),
+            a[1] + t * (b[1] - a[1]),
+            a[2] + t * (b[2] - a[2]),
         ]
 
         vec3_normalize(c)
@@ -337,10 +338,10 @@ class MapRenderer:
 
         # Load map data
         self.sf_low  = shapefile.Reader("./data/ne_110m_admin_0_countries/ne_110m_admin_0_countries")
-        self.sf_mid  = shapefile.Reader("./data/ne_50m_admin_0_countries/ne_50m_admin_0_countries")
+        #self.sf_mid  = shapefile.Reader("./data/ne_50m_admin_0_countries/ne_50m_admin_0_countries")
         #sf_high = shapefile.Reader("./data/ne_10m_admin_0_countries/ne_10m_admin_0_countries")
 
-    def draw(self, cam):
+    def draw_map(self, cam):
         sf = self.sf_low
         fb = self.fb
 
@@ -415,7 +416,7 @@ def animate_travel(gfx, cam, waypoints):
 
             wp = compute_geodesic(cam.gps, waypoints[-1])
 
-            gfx.draw(cam)
+            gfx.draw_map(cam)
             draw_waypoints(gfx.fb, cam, wp)
             gfx.fb.scanout()
             gfx.fb.win.refresh()
@@ -447,20 +448,15 @@ def main():
 
 
     pos = get_airport(con, "EFHK")
-    #airport_b = get_airport(con, "PASC")
-    #airport_b = get_airport(con, "KJFK")
 
     fb = Framebuffer(win)
     cam = Camera()
-
     gfx = MapRenderer(fb)
-
-
 
     while True:
         t_start = time.time()
 
-        gfx.draw(cam)
+        gfx.draw_map(cam)
 
         waypoints = compute_geodesic(pos, cam.gps)
         draw_waypoints(fb, cam, waypoints)
@@ -500,13 +496,8 @@ def main():
             cam.gps[1] -= cam.zoom * pan_speed
 
         elif ch == curses.KEY_ENTER or ch == 10 or ch == 13:
-
-            for gps in waypoints:
-                cam.gps[0] = gps[0]
-                cam.gps[1] = gps[1]
-                gfx.draw(cam)
-                fb.scanout()
-                win.refresh()
+            animate_travel(gfx, cam, waypoints)
+            pos = cam.gps.copy()
 
         elif ch == ord("l"):
             animate_travel(gfx, cam, waypoints)
