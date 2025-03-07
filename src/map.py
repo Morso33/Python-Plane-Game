@@ -393,28 +393,6 @@ class MapRenderer:
                     fb.pixel(vertex_b)
 
 
-def animate_travel_linear_disavled(gfx, cam, a, b, final):
-    anim_t0 = time.time()
-    anim_t1 = anim_t0
-
-    distance = geodesic( (a[1],a[0]), (b[1],b[0]) ).km
-
-    anim_dur = distance / 1000.0
-    while anim_t1 - anim_t0 < anim_dur:
-        anim_t1 = time.time()
-        t = (anim_t1 - anim_t0) / anim_dur
-        cam.gps = [
-            a[0] + t * (b[0] - a[0]),
-            a[1] + t * (b[1] - a[1])
-        ]
-
-        wp = compute_geodesic(cam.gps, final)
-
-        gfx.draw(cam)
-        draw_waypoints(gfx.fb, cam, wp)
-        gfx.fb.scanout()
-        gfx.fb.win.refresh()
-
 def animate_travel(gfx, cam, waypoints):
     anim_t0 = time.time()
     for i in range(1, len(waypoints)):
