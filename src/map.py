@@ -170,20 +170,16 @@ def get_airport(con, key):
 # "In geometry, a geodesic is a curve representing in some sense the locally
 # shortest path (arc) between two points in a surface" - Wikipedia
 # This is ultimately just a bad sphere lerp
-def draw_geodesic(fb, cam, gps_a, gps_b):
 
-    line_a = cam.project_gps(gps_a)
-    line_b = cam.project_gps(gps_b)
+def compute_geodesic(gps_a, gps_b):
+    waypoints = []
 
     a = gps_to_usphere(gps_a)
     b = gps_to_usphere(gps_b)
 
-    last = line_a
+    steps = 5 # Steps in geodesic
 
-    last_gps_x = line_a[0]
-
-    steps = 20 # Resolution of the approximation
-    for t in range(1, steps+1):
+    for t in range(0, steps+1):
         step = (t/steps);
 
         # Interpolate between two vectors
@@ -195,14 +191,19 @@ def draw_geodesic(fb, cam, gps_a, gps_b):
 
         vec3_normalize(c)
         gps = usphere_to_gps(c)
-        clip_c = cam.project_gps( gps )
 
-        if abs(last_gps_x - gps[0]) < 45:
-            fb.line(last, clip_c, 1)
-        last = clip_c
-        last_gps_x = gps[0]
+        waypoints.append(gps)
+    return waypoints
 
 
+
+
+def draw_waypoints(fb, cam, waypoints):
+    last = cam.project_gps(waypoints[0])
+    for i in range(1, len(waypoints)):
+        cur = cam.project_gps(waypoints[i])
+        fb.line(last, cur, 1)
+        last = cur
 
 def put_gps_text(fb, cam, gps, text):
     label = cam.project_gps(gps)
@@ -422,7 +423,9 @@ def main():
         fb.line((0.49, 0.5), (0.51, 0.5))
         fb.line((0.5, 0.50+s), (0.5, 0.50-s))
 
-        draw_geodesic(fb, cam, airport_a, cam.gps)
+
+        waypoints = compute_geodesic(airport_a, cam.gps)
+        draw_waypoints(fb, cam, waypoints)
 
         fb.scanout()
 
