@@ -393,7 +393,7 @@ class MapRenderer:
                     fb.pixel(vertex_b)
 
 
-def animate_travel(gfx, cam, a, b, final):
+def animate_travel_linear_disavled(gfx, cam, a, b, final):
     anim_t0 = time.time()
     anim_t1 = anim_t0
 
@@ -414,6 +414,35 @@ def animate_travel(gfx, cam, a, b, final):
         draw_waypoints(gfx.fb, cam, wp)
         gfx.fb.scanout()
         gfx.fb.win.refresh()
+
+def animate_travel(gfx, cam, waypoints):
+    anim_t0 = time.time()
+    for i in range(1, len(waypoints)):
+
+        a = waypoints[i-1]
+        b = waypoints[i]
+
+        anim_t1 = anim_t0
+
+        distance = geodesic( (a[1],a[0]), (b[1],b[0]) ).km
+
+        anim_dur = distance / 1000.0
+        while anim_t1 - anim_t0 < anim_dur:
+            anim_t1 = time.time()
+            t = (anim_t1 - anim_t0) / anim_dur
+            cam.gps = [
+                a[0] + t * (b[0] - a[0]),
+                a[1] + t * (b[1] - a[1])
+            ]
+
+            wp = compute_geodesic(cam.gps, waypoints[-1])
+
+            gfx.draw(cam)
+            draw_waypoints(gfx.fb, cam, wp)
+            gfx.fb.scanout()
+            gfx.fb.win.refresh()
+        anim_t0 = anim_t1
+
 
 def main():
     con = mariadb.connect(
@@ -502,9 +531,7 @@ def main():
                 win.refresh()
 
         elif ch == ord("l"):
-            final = waypoints[-1].copy()
-            for i in range(1, len(waypoints)):
-                animate_travel(gfx, cam, waypoints[i-1], waypoints[i], final)
+            animate_travel(gfx, cam, waypoints)
 
         elif ch == ord("e"):
             pos[0] = cam.gps[0]
