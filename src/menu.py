@@ -1,10 +1,19 @@
 import flight_creator
+import time
+
+
+def fake_animation():
+    print("Tanelin animaatio")
+    print("Done")
+
+    
 
 
 def draw(con, gPlayer):
     print("Currently in: " + flight_creator.get_airport_name_from_id(con, gPlayer.current_airport_id) 
           + " with " + gPlayer.current_aircraft.aircraft_type + " " 
           + gPlayer.current_aircraft.aircraft_name)
+    print("Money: " + str(gPlayer.money))
     
     print("Available Flights:")
     FLIGHT_COUNT = 3
@@ -20,6 +29,9 @@ def draw(con, gPlayer):
     user_input = input("Choose an option: ")
     if user_input == "1":
         print("Flight 1 chosen")
+        fake_animation()
+        draw(con, gPlayer)
+
     elif user_input == "2":
         print("Flight 2 chosen")
     elif user_input == "3":

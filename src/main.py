@@ -20,7 +20,7 @@ def main():
     print("DB con ok")
     osw.cls()
     #Set player to Helsinki-Vantaa
-    gPlayer = player.cPlayer(2307, aircraft.cAircraft("heavy", "Boeing 737", 800, 2, 3000))
+    gPlayer = player.cPlayer(2307, aircraft.cAircraft("medium", "Learjet 75", 860, 2, 3700), 5000)
     menu.draw(con, gPlayer)
     flight_creator.create_possible_flight(con, gPlayer)
 

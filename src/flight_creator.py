@@ -48,7 +48,7 @@ def create_possible_flight(con, gPlayer):
         else:
             exit_loop = True
         
-    return "From: " + get_airport_name_from_id(con, gPlayer.current_airport_id) + " To: " + get_airport_name_from_id(con, end_airport_id) + " Distance: " + str(distance) + " km"
+    return "From: " + get_airport_name_from_id(con, gPlayer.current_airport_id) + " To: " + get_airport_name_from_id(con, end_airport_id) + " Distance: " + str(distance) + " km" + " Payout: " + str(get_payout(distance, gPlayer.current_aircraft.aircraft_fuel_burn_per_km, gPlayer.current_aircraft.aircraft_type))
 
 def get_airport_name_from_id(con, id):
     cur = con.cursor()
@@ -63,11 +63,29 @@ def get_airport_type_from_id(con, id):
     return cur.fetchone()[0]
 
 def get_acceptable_airport_types_for_aircraft_type(aircraft_type):
-    if aircraft_type == "light":
+    if aircraft_type == "small":
         return ["small_airport"]
     elif aircraft_type == "medium":
         return ["medium_airport", "large_airport"]
-    elif aircraft_type == "heavy":
+    elif aircraft_type == "large":
         return ["large_airport"]
     else:
         pass
+
+
+def get_payout(distance, aircraft_fuel_burn_per_km, aircraft_type):
+    costs = distance * aircraft_fuel_burn_per_km
+    payout = 0
+    if aircraft_type == "small":
+        payout = costs * 1.5
+    elif aircraft_type == "medium":
+        payout = costs * 2
+    elif aircraft_type == "large":
+        payout = costs * 2
+    else:
+        pass
+
+    random_factor = random.uniform(0.8, 1.2)
+    rounded = round(payout * random_factor, -2)
+    #Remove decimals
+    return int(rounded)
