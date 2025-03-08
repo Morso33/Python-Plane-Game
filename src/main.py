@@ -3,9 +3,12 @@ import menu
 import flight_creator
 import mariadb
 import player
+import aircraft
+import osw
 
 
 def main():
+    print("EntryPoint called, wait for initialization")
     con = mariadb.connect(
     host='127.0.0.1',
     port=3306,
@@ -14,11 +17,12 @@ def main():
     password='metropolia',
     autocommit=True
     )
+    print("DB con ok")
+    osw.cls()
     #Set player to Helsinki-Vantaa
-    player1 = player.player(3)
-    print("EntryPoint called, wait for initialization")
-    menu.draw()
-    flight_creator.create_possible_flight(con)
+    gPlayer = player.cPlayer(2307, aircraft.cAircraft("heavy", "Boeing 737", 800, 2, 3000))
+    menu.draw(con, gPlayer)
+    flight_creator.create_possible_flight(con, gPlayer)
 
 
 
