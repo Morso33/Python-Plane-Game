@@ -33,6 +33,8 @@ from geopy.distance import geodesic
 # using this. Mainly used just for rendering logic.
 # In degrees. Note: math functions typically require radians.
 # Always use (longitude, latitude) order when grouping coordinates. X before Y.
+# Library functions like geopy may require opposite order, pay attention. Wrap
+# such functions if possible.
 # Fun fact: GPS coordinates are functionally equilevelant to yaw and pitch.
 #
 #    longitude(x)
@@ -153,7 +155,7 @@ def draw_all_airports(fb, cam, con):
         put_gps_text(fb, cam, (lon,lat), f"● {ident}")
 
 
-def get_airport(con, key):
+def icao_coords(con, key):
     cur = con.cursor()
     query = "SELECT longitude_deg, latitude_deg FROM airport WHERE ident=%s"
     cur.execute(query, (key,))
@@ -199,13 +201,7 @@ def compute_geodesic(gps_a, gps_b):
 
 
 
-def draw_waypoints(fb, cam, waypoints):
-    last = cam.project_gps(waypoints[0])
-    for i in range(1, len(waypoints)):
-        cur = cam.project_gps(waypoints[i])
-        fb.line(last, cur, 1)
-        last = cur
-
+# Writing text to buffer must be done *after* map scanout
 def put_gps_text(fb, cam, gps, text):
     label = cam.project_gps(gps)
     x = int(label[0] * fb.w)
@@ -218,7 +214,7 @@ def put_gps_text(fb, cam, gps, text):
 # This is the buffer from which ascii graphics are ultimately generated
 # Each pixel gets a 32bit value; last 4 bits are "subpixels", other bits
 # determine color and such
-class Framebuffer:
+class FrameBuffer:
     def __init__(self, win):
         self.w = 300
         self.h = 80
@@ -255,7 +251,9 @@ class Framebuffer:
             val <<= 1
         if subpixel[1] >= 0.5:
             val <<= 2
-        self.buffer[ int(pixel[1])*self.w + int(pixel[0]) ] |= val | (data<<8)
+        pxl = self.buffer[ int(pixel[1])*self.w + int(pixel[0]) ];
+        pxl = pxl|val | (pxl&0xF|(data<<8))
+        self.buffer[ int(pixel[1])*self.w + int(pixel[0]) ] = pxl;
 
     # Common DDA line drawing algorithm
     def line(self, clip_a, clip_b, data=0):
@@ -291,10 +289,7 @@ class Framebuffer:
                     case 0:
                         self.win.addch(y, x, " ", curses.color_pair(0))
                     case _:
-                        if (char & 1<<8):
-                            self.win.addch(y, x, lut[block], curses.color_pair(2))
-                        else:
-                            self.win.addch(y, x, lut[block], curses.color_pair(0))
+                        self.win.addch(y, x, lut[block], curses.color_pair( (char>>8)+1) )
                 self.buffer[index] = 0
 
 
@@ -317,7 +312,6 @@ class Camera:
         return point
 
     def update_clip(self, fb):
-
         self.aspect = fb.w / fb.h / 2.0
 
         x,y = gps_to_mercator(self.gps)
@@ -335,6 +329,7 @@ class Camera:
 class MapRenderer:
     def __init__(self, fb):
         self.fb = fb
+        self.win = fb.win
 
         # Load map data
         self.sf_low  = shapefile.Reader("./data/ne_110m_admin_0_countries/ne_110m_admin_0_countries")
@@ -393,6 +388,14 @@ class MapRenderer:
                     #fb.pixel(vertex_a)
                     fb.pixel(vertex_b)
 
+    def draw_waypoints(self, cam, waypoints):
+        last = cam.project_gps(waypoints[0])
+        for i in range(1, len(waypoints)):
+            cur = cam.project_gps(waypoints[i])
+            self.fb.line(last, cur, 1)
+            last = cur
+
+
 
 def animate_travel(gfx, cam, waypoints):
     anim_t0 = time.time()
@@ -417,9 +420,9 @@ def animate_travel(gfx, cam, waypoints):
             wp = compute_geodesic(cam.gps, waypoints[-1])
 
             gfx.draw_map(cam)
-            draw_waypoints(gfx.fb, cam, wp)
+            gfx.draw_waypoints(cam, wp)
             gfx.fb.scanout()
-            gfx.fb.win.refresh()
+            gfx.win.refresh()
         anim_t0 = anim_t1
 
 
@@ -443,13 +446,14 @@ def main():
     curses.start_color()
     curses.use_default_colors()
     # Colors
-    curses.init_pair(2, 9, 0)
     curses.init_pair(1, 15, 0)
+    curses.init_pair(2, 9, 0)
+    curses.init_pair(3, 10, 0)
 
 
-    pos = get_airport(con, "EFHK")
+    pos = icao_coords(con, "EFHK")
 
-    fb = Framebuffer(win)
+    fb = FrameBuffer(win)
     cam = Camera()
     gfx = MapRenderer(fb)
 
@@ -458,8 +462,13 @@ def main():
 
         gfx.draw_map(cam)
 
+        #for x in range(-180, 180, 60):
+        #    fb.line( cam.project_gps((x,-90)), cam.project_gps((x,90)), 2)
+        #for y in range(-180, 180-10, 60):
+        #    fb.line( cam.project_gps((-180, y)), cam.project_gps((180, y)), 2)
+
         waypoints = compute_geodesic(pos, cam.gps)
-        draw_waypoints(fb, cam, waypoints)
+        gfx.draw_waypoints(cam, waypoints)
 
         fb.scanout()
 
@@ -471,7 +480,7 @@ def main():
         #put_gps_text(fb, cam, airport_a, "EFHK")
 
         win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}, {win.getmaxyx()} {gps_to_mercator(cam.gps)}")
-        win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle reprojection")
+        win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle reprojection, Enter to animate travel")
         win.addstr(2,0,f"{pos}")
         #win.addstr(2,0,f"Distance: { geodesic( (airport_a[1],airport_a[0]), (cam.gps[1],cam.gps[0]) ).km }")
         win.refresh()
