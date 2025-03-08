@@ -2,6 +2,7 @@
 import menu
 import flight_creator
 import mariadb
+import player
 
 
 def main():
@@ -13,6 +14,8 @@ def main():
     password='metropolia',
     autocommit=True
     )
+    #Set player to Helsinki-Vantaa
+    player1 = player.player(3)
     print("EntryPoint called, wait for initialization")
     menu.draw()
     flight_creator.create_possible_flight(con)

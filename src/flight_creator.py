@@ -9,7 +9,7 @@ def get_random_airport_id(con):
     cur.execute(query)
     return cur.fetchone()[0]
 
-def get_lat_lon(con, id):
+def get_lat_lon_from_airport_id(con, id):
     cur = con.cursor()
     query = "SELECT latitude_deg, longitude_deg FROM airport WHERE id=%s"
     cur.execute(query, (id,))
@@ -29,10 +29,9 @@ def create_possible_flight(con):
             continue
 
         #Get the coordinates of the airports
-        start_airport = get_lat_lon(con, end_airport_id)
-        end_airport = get_lat_lon(con, end_airport_id)
+        start_airport = get_lat_lon_from_airport_id(con, start_airport_id)
+        end_airport = get_lat_lon_from_airport_id(con, end_airport_id)
 
-        print("Start airport: " + str(start_airport))
 
         #Calculate the distance between the airports
         distance = geodesic(start_airport, end_airport).km
@@ -40,13 +39,3 @@ def create_possible_flight(con):
         print("Distance between airports: " + str(distance) + " km")
 
 
-
-def get_airport(con, id):
-    cur = con.cursor()
-    query = "SELECT longitude_deg, latitude_deg FROM airport WHERE id=%s"
-    cur.execute(query, (id,))
-    coords = cur.fetchone()
-    if coords == None:
-        print("flight_creator::get_airport: Airport with id " + str(id) + " not found.")
-        exit()
-    return coords
