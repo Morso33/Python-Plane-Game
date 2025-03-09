@@ -89,7 +89,7 @@ class GameState:
 
             distance = geodesic( (a[1],a[0]), (b[1],b[0]) ).km
 
-            anim_dur = distance / 1000.0
+            anim_dur = distance / 500.0 # km per second real-time
             while anim_t1 - anim_t0 < anim_dur:
                 anim_t1 = time.time()
                 t = (anim_t1 - anim_t0) / anim_dur
