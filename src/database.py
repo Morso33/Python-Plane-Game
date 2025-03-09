@@ -1,7 +1,7 @@
 import mariadb
 
 # Change this value to cause database to reset
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "5"
 
 class Database():
     def __init__(self):
@@ -22,6 +22,9 @@ class Database():
         except:
             self.reset()
 
+        # Reset anyway for now
+        self.reset()
+
 
      # Write the database schema here !!!
     def reset(self):
@@ -37,8 +40,29 @@ class Database():
             );
         """)
 
-        self.metadata_set("schema", SCHEMA_VERSION)
+        cur.execute("DROP TABLE IF EXISTS customer;")
+        cur.execute("""
+            CREATE TABLE customer (
+                id          int     NOT NULL,
 
+                name        VARCHAR(40) NOT NULL,
+
+                origin      varchar(40),
+                destination varchar(40),
+
+                deadline    int     NOT NULL,
+
+                PRIMARY KEY (id),
+
+                FOREIGN KEY(origin)      REFERENCES airport(ident),
+                FOREIGN KEY(destination) REFERENCES airport(ident)
+
+            ) DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+        """)
+
+
+        # THIS MUST BE THE LAST LINE OF THIS FUNCTION
+        self.metadata_set("schema", SCHEMA_VERSION)
 
 
     def metadata_get(self, key):
