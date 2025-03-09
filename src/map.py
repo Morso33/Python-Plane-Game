@@ -655,7 +655,18 @@ def customers_prepass(game):
 def menu_find_customers(game):
     customers = game.db.customers_from_airport(game.airport)
     # Make sure airport has at least 3 customers
-    for i in range(0, max(3 - len(customers), 0)):
+
+    cur_type = game.db.airport_type_icao(game.airport)
+    customer_count = 0
+    match cur_type:
+        case "small_airport":
+            customer_count = 0
+        case "medium_airport":
+            customer_count = 3
+        case "large_airport":
+            customer_count = 5
+
+    for i in range(0, max(customer_count - len(customers), 0)):
         customer = Customer(game.db)
         customer.generate(game.airport)
         customer.save()
@@ -670,7 +681,7 @@ def menu_find_customers(game):
             continue
         popup.add_text(f"#{i}: {customer.name}")
         distance = game.db.icao_distance(customer.origin, customer.destination)
-        popup.add_text(f"{customer.origin} -> {customer.destination}")
+        popup.add_text(f"{customer.origin} -> {customer.destination} ({game.db.airport_type_icao(customer.destination)})")
 
         popup.add_text(f"Distance: {int(distance)} km")
         popup.add_text(f"Reward:   $ {customer.reward}")
