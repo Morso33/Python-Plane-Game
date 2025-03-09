@@ -97,6 +97,11 @@ class Popup:
             elif ch == ord("s") or ch == curses.KEY_DOWN:
                 sel += 1
 
+            elif ch == ord("x"):
+                game.cam.zoom *= 2.0
+            elif ch == ord("z"):
+                game.cam.zoom /= 2.0
+
             sel = max(0, min(sel, len(self.cmd)-1))
 
 
