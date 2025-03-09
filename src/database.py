@@ -77,6 +77,15 @@ class Database():
         cur.execute("REPLACE INTO metadata (id, value) VALUES (?, ?)", (key,value))
 
 
+    def icao_exists(self, icao):
+        cur = self.con.cursor()
+        query = f"SELECT id FROM airport WHERE ident = ?"
+        cur.execute(query, (icao,))
+        result = cur.fetchall()
+        if len(result) != 1:
+            return False
+        return True
+
 
     def airport_xy_icao(self, key):
         cur = self.con.cursor()

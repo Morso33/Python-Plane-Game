@@ -13,16 +13,6 @@ def foobar(db):
     print(result[0])
 
 
-def icao_exists(db, icao):
-    cur = db.con.cursor()
-    query = f"SELECT id FROM airport WHERE ident = ?"
-    cur.execute(query, (icao,))
-    result = cur.fetchall()
-    if len(result) != 1:
-        return False
-    return True
-
-
 def customers_from_airport(db, icao):
     cur = db.con.cursor()
     query = f"SELECT id FROM customer WHERE origin = ?"
@@ -57,7 +47,7 @@ def accepted_customers(db):
 
 class Customer:
     def __init__(self, db):
-        self.name = f"Customer{random.randint(1, 9999)}"
+        self.name = f"Customer{random.randint(1000, 9999)}"
         self.db = db
 
         self.id = 0
@@ -153,24 +143,38 @@ class Customer:
         self.accepted    = result[6]
 
 
+class GameState:
+    def __init__(self, db):
+        self.db = db
+
+        self.money = 5000
+        self.airport = "EFHK"
+
+    def fly_to(self, icao):
+        target = icao.upper()
+
+        if self.db.icao_exists(target):
+            self.airport = target
+
+
 
 def main():
     db = database.Database()
     db.reset()
 
-    money = 5000
-    airport = "EFHK"
+
+    game = GameState(db)
 
 
     while True:
         print("")
 
-        customers = customers_from_airport(db, airport)
+        customers = customers_from_airport(db, game.airport)
 
         # Make sure airport has at least 3 customers
         for i in range(0, max(3 - len(customers), 0)):
             customer = Customer(db)
-            customer.generate(airport)
+            customer.generate(game.airport)
             customer.save()
 
 
@@ -178,18 +182,18 @@ def main():
         customers_on_board   = accepted_customers(db)
 
         for customer in customers_on_board:
-            if airport != customer.destination:
+            if game.airport != customer.destination:
                 continue
             print( f"You have completed {customer.name}'s flight, and was rewarded ${customer.reward}" )
-            money += customer.reward
+            game.money += customer.reward
             customer.drop()
 
         customers_on_board   = accepted_customers(db)
 
-        print(f"Airport: {airport}")
-        print(f"Money:   {money}")
+        print(f"Current airport: {game.airport}")
+        print(f"Money:   ${game.money}")
 
-        customers_on_airport = customers_from_airport(db, airport)
+        customers_on_airport = customers_from_airport(db, game.airport)
 
         print(f"Customers on board:   {len(customers_on_board)}")
         print(f"Customers on airport: {len(customers_on_airport)}")
@@ -213,11 +217,8 @@ def main():
             # PURKKA PURKKA PURKKA
             case "fly":
                 if (len(argv) == 2):
-                    target = argv[1].upper()
-                    print( f"{target} {icao_exists(db, target)}" )
+                    game.fly_to(argv[1])
 
-                    if icao_exists(db, target):
-                        airport = target
 
 
 
