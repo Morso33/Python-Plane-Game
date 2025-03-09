@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import database
+import textwrap
 import shapefile
 import array
 import math
@@ -133,6 +134,14 @@ def gps_to_mercator(gps):
     return [x,y]
 
 
+
+def split_text(text, max_length):
+    lines = text.split('\n')
+    wrapped_lines = []
+    for line in lines:
+        wrapped_lines.extend(
+            textwrap.wrap(line, width=max_length, break_long_words=False, replace_whitespace=False) or [''])
+    return wrapped_lines
 
 
 def vec3_lenght(vec):
@@ -679,9 +688,7 @@ def main():
             if game.airport != customer.destination:
                 continue
             popup(game,
-                [f"You have completed {customer.name}'s",
-                 f"flight, and were rewarded ${customer.reward}"],
-
+                split_text(f"You have completed {customer.name}'s flight, and were rewarded ${customer.reward}", 36),
                 ["Ok"]
             )
             game.money += customer.reward
@@ -707,7 +714,7 @@ def main():
         )
 
         if action == "Developer options":
-            action = popup(game, [], ["Freecam", "Reset"])
+            action = popup(game, [], ["Freecam", "Reset", "Return"])
             if action == "Reset":
                 db.reset()
                 popup(game, ["Database reset"], ["Ok"])
