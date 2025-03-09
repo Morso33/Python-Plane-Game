@@ -766,14 +766,17 @@ class GameState:
 
 
     def fly_to(self, icao):
+        target = icao.upper()
+        if not self.db.icao_exists(target):
+            return
+
+        if self.airport == target:
+            return
 
         # Zoom out the map to at least 15deg zoom for flights
         self.cam.zoom = max(self.cam.zoom, 15)
 
-        target = icao.upper()
 
-        if not self.db.icao_exists(target):
-            return
 
         gps_a = self.db.airport_xy_icao(self.airport)
         gps_b = self.db.airport_xy_icao(target)
