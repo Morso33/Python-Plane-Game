@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import mariadb
+import database
 import shapefile
 import array
 import math
@@ -427,14 +427,7 @@ def animate_travel(gfx, cam, waypoints):
 
 
 def main():
-    con = mariadb.connect(
-        host='127.0.0.1',
-        port=3306,
-        database='flight_game',
-        user='metropolia',
-        password='metropolia',
-        autocommit=True
-    )
+    db = database.Database()
 
     # Curses initialization
     win = curses.initscr()
@@ -451,7 +444,7 @@ def main():
     curses.init_pair(3, 10, 0)
 
 
-    pos = icao_coords(con, "EFHK")
+    pos = db.airport_xy_icao("EFHK")
 
     fb = FrameBuffer(win)
     cam = Camera()
@@ -476,7 +469,7 @@ def main():
         t_end = time.time()
 
         if (cam.zoom <= 15.0):
-            draw_all_airports(fb, cam, con)
+            draw_all_airports(fb, cam, db.con)
         #put_gps_text(fb, cam, airport_a, "EFHK")
 
         win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}, {win.getmaxyx()} {gps_to_mercator(cam.gps)}")
