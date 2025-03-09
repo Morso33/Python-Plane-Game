@@ -634,6 +634,23 @@ def choose_airport_from_map(game):
             global disable_mercator
             disable_mercator = not disable_mercator
 
+def customers_postpass(game):
+    customers = game.db.customers_from_airport(game.airport)
+    i = 0
+    for customer in customers:
+        i+=1
+        gps = game.db.airport_xy_icao(customer.destination)
+        put_gps_text(game.gfx.fb, game.cam, gps, f"● #{i}")
+
+def customers_prepass(game):
+    customers = game.db.customers_from_airport(game.airport)
+    for customer in customers:
+        gps = game.db.airport_xy_icao(customer.destination)
+        #put_gps_text(game.gfx.fb, game.cam, gps, f"● #{i}")
+        wp = compute_geodesic(game.cam.gps, gps)
+        game.gfx.draw_waypoints(game.cam, wp)
+
+
 
 def menu_find_customers(game):
     customers = game.db.customers_from_airport(game.airport)
@@ -644,7 +661,6 @@ def menu_find_customers(game):
         customer.save()
     # Reload customers in case of changes
     customers = game.db.customers_from_airport(game.airport)
-
     popup = Popup(game)
 
     i = 0
@@ -662,6 +678,10 @@ def menu_find_customers(game):
         popup.add_option(f"Board customer #{i}", i)
 
     popup.add_option(f"Return")
+    popup.offscreen = True
+
+    popup.postpass = customers_postpass
+    popup.prepass = customers_prepass
     action = popup.run()
 
     if action == "Return":
@@ -698,14 +718,11 @@ def menu_fly(game):
 
 
 
-
-
 class GameState:
     def __init__(self):
 
         self.money = 5000
         self.airport = "EFHK"
-
 
         self.db = database.Database()
 
@@ -738,6 +755,10 @@ class GameState:
 
 
     def fly_to(self, icao):
+
+        # Zoom out the map to at least 15deg zoom for flights
+        self.cam.zoom = max(self.cam.zoom, 15)
+
         target = icao.upper()
 
         if not self.db.icao_exists(target):

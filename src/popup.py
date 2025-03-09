@@ -17,6 +17,11 @@ class Popup:
         self.txt = []
         self.cmd = []
         self.ret = []
+        self.offscreen = False
+
+        # Binds for custom rendering (very jank !!)
+        self.prepass = None
+        self.postpass = None
 
     def add_text(self, text):
         self.txt.extend( split_text(text, self.w - 4) )
@@ -36,10 +41,17 @@ class Popup:
         h = self.h
         while True:
             gfx.draw_map(game.cam)
+            if self.prepass != None:
+                self.prepass(game)
             gfx.fb.scanout()
+            if self.postpass != None:
+                self.postpass(game)
 
             x = gfx.fb.w // 2 - w // 2
             y = gfx.fb.h // 2 - h // 2
+
+            if self.offscreen:
+                x = gfx.fb.w - w
 
             gfx.win.addstr(y, x, "+" + ("-")*(w-2) + "+")
             y+=1
