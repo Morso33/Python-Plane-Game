@@ -1,7 +1,8 @@
 import database
 import random
 
-# Temporary shit
+# Jankfest game
+# solo speedrunning project because group does nothing produtive
 
 def foobar(db):
     cur = db.con.cursor()
@@ -12,6 +13,14 @@ def foobar(db):
     print(result[0])
 
 
+def icao_exists(db, icao):
+    cur = db.con.cursor()
+    query = f"SELECT id FROM airport WHERE ident = ?"
+    cur.execute(query, (icao,))
+    result = cur.fetchall()
+    if len(result) != 1:
+        return False
+    return True
 
 
 def customers_from_airport(db, icao):
@@ -30,6 +39,20 @@ def customers_from_airport(db, icao):
     return customers;
 
 
+def accepted_customers(db):
+    cur = db.con.cursor()
+    query = f"SELECT id FROM customer WHERE accepted = 1"
+    cur.execute(query, )
+    result = cur.fetchall()
+
+    customers = []
+
+    for (customer_id,) in result:
+        c = Customer(db)
+        c.load(customer_id)
+        customers.append(c)
+
+    return customers;
 
 
 class Customer:
@@ -51,6 +74,9 @@ class Customer:
         print("deadline    ", self.deadline)
         print("accepted    ", self.accepted)
 
+    def summary(self):
+        return f"{self.name:15} :: {self.origin:>8} -> {self.destination:8} :: ${self.reward} :: {'airport' if self.accepted==0 else 'boarded'}"
+
     # Assume cessna for now
     def generate(self, origin_icao, aircraft_type="small"):
         self.origin = origin_icao
@@ -61,6 +87,15 @@ class Customer:
         self.destination = result[0]
 
         self.reward = 1000 * random.randint(1, 5)
+
+
+    def accept(self):
+        cur = self.db.con.cursor()
+        query = f"UPDATE customer SET accepted = 1 WHERE id = ?"
+        cur.execute(query, (self.id,))
+
+        self.accepted = 1
+
 
 
     # This sucks but good enough for now (i dont care)
@@ -88,10 +123,16 @@ class Customer:
             )
         )
 
+
+    def drop(self):
+        cur = self.db.con.cursor()
+        cur.execute("DELETE FROM customer WHERE id = ?", (self.id,))
+
     def load(self, customer_id):
         cur = self.db.con.cursor()
         query = """
             SELECT
+                id,
                 name,
                 origin,
                 destination,
@@ -103,38 +144,83 @@ class Customer:
         cur.execute(query, (customer_id,))
         result = cur.fetchone()
 
-        self.name        = result[0]
-        self.origin      = result[1]
-        self.destination = result[2]
-        self.reward      = result[3]
-        self.deadline    = result[4]
-        self.accepted    = result[5]
-
-        print(result)
+        self.id          = result[0]
+        self.name        = result[1]
+        self.origin      = result[2]
+        self.destination = result[3]
+        self.reward      = result[4]
+        self.deadline    = result[5]
+        self.accepted    = result[6]
 
 
 
 def main():
     db = database.Database()
-    #db.reset()
+    db.reset()
 
     money = 5000
     airport = "EFHK"
 
 
+    while True:
+        print("")
 
-    customers = customers_from_airport(db, airport)
+        customers = customers_from_airport(db, airport)
 
-    # Make sure airport has at least 3 customers
-    for i in range(0, max(3 - len(customers), 0)):
-        customer = Customer(db)
-        customer.set_airports(airport)
-        customer.save()
+        # Make sure airport has at least 3 customers
+        for i in range(0, max(3 - len(customers), 0)):
+            customer = Customer(db)
+            customer.generate(airport)
+            customer.save()
 
 
-    customers = customers_from_airport(db, airport)
-    for customer in customers:
-        customer.print()
+
+        customers_on_board   = accepted_customers(db)
+
+        for customer in customers_on_board:
+            if airport != customer.destination:
+                continue
+            print( f"You have completed {customer.name}'s flight, and was rewarded ${customer.reward}" )
+            money += customer.reward
+            customer.drop()
+
+        customers_on_board   = accepted_customers(db)
+
+        print(f"Airport: {airport}")
+        print(f"Money:   {money}")
+
+        customers_on_airport = customers_from_airport(db, airport)
+
+        print(f"Customers on board:   {len(customers_on_board)}")
+        print(f"Customers on airport: {len(customers_on_airport)}")
+
+
+        for customer in customers_on_airport:
+            print( customer.summary() )
+
+        command = input("Command: ")
+
+        argv = command.split(" ")
+
+        match argv[0]:
+            case "1":
+                customers_on_airport[0].accept()
+            case "2":
+                customers_on_airport[1].accept()
+            case "3":
+                customers_on_airport[2].accept()
+
+            # PURKKA PURKKA PURKKA
+            case "fly":
+                if (len(argv) == 2):
+                    target = argv[1].upper()
+                    print( f"{target} {icao_exists(db, target)}" )
+
+                    if icao_exists(db, target):
+                        airport = target
+
+
+
 
 
 
