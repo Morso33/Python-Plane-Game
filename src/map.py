@@ -11,6 +11,7 @@ from geopy.distance import geodesic
 
 from customer import Customer
 from game import GameState
+from popup import Popup
 
 # Coordinate systems
 
@@ -135,13 +136,6 @@ def gps_to_mercator(gps):
 
 
 
-def split_text(text, max_length):
-    lines = text.split('\n')
-    wrapped_lines = []
-    for line in lines:
-        wrapped_lines.extend(
-            textwrap.wrap(line, width=max_length, break_long_words=False, replace_whitespace=False) or [''])
-    return wrapped_lines
 
 
 def vec3_lenght(vec):
@@ -445,61 +439,20 @@ def animate_travel(gfx, cam, waypoints):
         anim_t0 = anim_t1
 
 
+
+
 def popup(game, text, options):
+    menu = Popup(game)
 
-    gfx = game.gfx
+    for line in text:
+        menu.add_text(line)
 
-    popup_w = 40
-    popup_h = 10
-    #text = [
-    #    "This is a popup window. Use arrow",
-    #    "keys to change selection, enter to",
-    #    "choose."
-    #]
-    #options = ["Okay", "Cancel"]
+    for line in options:
+        menu.add_option(line)
 
-    sel = 0
+    return menu.run()
 
 
-    while True:
-        gfx.draw_map(game.cam)
-        gfx.fb.scanout()
-
-        x = gfx.fb.w // 2 - popup_w // 2
-        y = gfx.fb.h // 2 - popup_h // 2
-
-        gfx.win.addstr(y, x, "+" + ("-")*(popup_w-2) + "+")
-        y+=1
-        for line in text:
-            gfx.win.addstr(y, x, f"| {" "*(popup_w-4)} |")
-            gfx.win.addstr(y, x+2, line)
-            y+=1
-
-        gfx.win.addstr(y, x, f"| {" "*(popup_w-4)} |")
-        y+=1
-
-        for i in range(len(options)):
-            line = options[i]
-            gfx.win.addstr(y, x, f"| {" "*(popup_w-4)} |")
-            gfx.win.addstr(y, x+2, ("> " if i==sel else "  ") + line)
-            y+=1
-
-        gfx.win.addstr(y, x, "|" + (" ")*(popup_w-2) + "|")
-        y+=1
-        gfx.win.addstr(y, x, "+" + ("-")*(popup_w-2) + "+")
-
-        gfx.win.refresh()
-
-        ch = gfx.win.getch()
-
-        if ch == curses.KEY_ENTER or ch == 10 or ch == 13:
-            return options[sel]
-        elif ch == ord("w"):
-            sel -= 1
-        elif ch == ord("s"):
-            sel += 1
-
-        sel = max(0, min(sel, len(options)-1))
 
 
 def freecam(game):
@@ -580,6 +533,8 @@ def freecam(game):
             global disable_mercator
             disable_mercator = not disable_mercator
 
+
+
 def menu_find_customers(game):
     customers = game.db.customers_from_airport(game.airport)
     # Make sure airport has at least 3 customers
@@ -618,29 +573,24 @@ def menu_find_customers(game):
 def menu_fly(game):
     customers = game.db.accepted_customers()
 
-    txt = []
-    cmd = []
+    menu = Popup(game)
+
     i = 0
 
     for customer in customers:
         i+=1
-        txt.append(f"#{i}: {customer.name}")
-        txt.append(f"{customer.origin} -> {customer.destination}")
-        txt.append(f"Reward: ${customer.reward}")
+        menu.add_text(f"#{i}: {customer.name}")
+        menu.add_text(f"{customer.origin} -> {customer.destination}")
+        menu.add_text(f"Reward: ${customer.reward}")
+        menu.add_text(f"")
 
-        txt.append(f"")
+        menu.add_option(f"Fly to {customer.destination}", customer.destination)
 
-        cmd.append(f"Fly to {customer.destination}")
+    menu.add_option(f"Fly to KJFK", "KJFK")
+    menu.add_option(f"Return")
+    target = menu.run()
 
-    cmd.append(f"Fly to KJFK")
-    cmd.append(f"Return")
-    action = popup(game, txt, cmd)
-
-    argv = action.split("Fly to ")
-
-    if (len(argv) == 2):
-        target = argv[1]
-
+    if (game.db.icao_exists(target)):
         gps_a = game.db.airport_xy_icao(game.airport)
         gps_b = game.db.airport_xy_icao(target)
 
@@ -688,30 +638,22 @@ def main():
             if game.airport != customer.destination:
                 continue
             popup(game,
-                split_text(f"You have completed {customer.name}'s flight, and were rewarded ${customer.reward}", 36),
+                [f"You have completed {customer.name}'s flight, and were rewarded ${customer.reward}"],
                 ["Ok"]
             )
             game.money += customer.reward
             customer.drop()
 
 
-        status = []
-
-        status.append( f"At airport {game.airport}" )
-        status.append( f"Money: ${game.money}" )
-
-        actions = []
-
-        actions.append("Look for customers")
-        actions.append("Fly to destination")
-        actions.append("View your customers (TODO)")
-        actions.append("Developer options")
-        actions.append("Quit game")
-        action = popup(
-            game,
-            status,
-            actions
-        )
+        menu = Popup(game)
+        menu.add_text(f"At airport {game.airport}" )
+        menu.add_text(f"Money: ${game.money}" )
+        menu.add_option("Look for customers")
+        menu.add_option("Fly to destination")
+        menu.add_option("View your customers (TODO)")
+        menu.add_option("Developer options")
+        menu.add_option("Quit game")
+        action = menu.run()
 
         if action == "Developer options":
             action = popup(game, [], ["Freecam", "Reset", "Return"])
@@ -729,7 +671,7 @@ def main():
             menu_fly(game)
 
         if action == "Quit game":
-            popup(game, ["Bye bye !"], [""])
+            popup(game, [], ["Bye bye !"])
             break
 
 
