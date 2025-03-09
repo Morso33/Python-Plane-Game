@@ -1,5 +1,7 @@
 import mariadb
 
+from customer import Customer
+
 # Change this value to cause database to reset
 SCHEMA_VERSION = "5"
 
@@ -28,7 +30,7 @@ class Database():
 
      # Write the database schema here !!!
     def reset(self):
-        print("Resetting database")
+        #print("Resetting database")
 
         cur = self.con.cursor()
         cur.execute("DROP TABLE IF EXISTS metadata;")
@@ -98,3 +100,32 @@ class Database():
         return [coords[0],coords[1]]
 
 
+    def customers_from_airport(self, icao):
+        cur = self.con.cursor()
+        query = f"SELECT id FROM customer WHERE origin = ?"
+        cur.execute(query, (icao,))
+        result = cur.fetchall()
+
+        customers = []
+
+        for (customer_id,) in result:
+            c = Customer(self)
+            c.load(customer_id)
+            customers.append(c)
+
+        return customers
+
+    def accepted_customers(self):
+        cur = self.con.cursor()
+        query = f"SELECT id FROM customer WHERE accepted = 1"
+        cur.execute(query, )
+        result = cur.fetchall()
+
+        customers = []
+
+        for (customer_id,) in result:
+            c = Customer(self)
+            c.load(customer_id)
+            customers.append(c)
+
+        return customers

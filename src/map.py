@@ -8,6 +8,9 @@ import curses
 from geopy.distance import great_circle
 from geopy.distance import geodesic
 
+from customer import Customer
+from game import GameState
+
 # Coordinate systems
 
 # Clip space / Normalized device coordinates
@@ -388,6 +391,13 @@ class MapRenderer:
                     #fb.pixel(vertex_a)
                     fb.pixel(vertex_b)
 
+    def draw_gamestate(self, game):
+        x = self.fb.w - 40;
+        self.win.addstr(0, x, f"Current airport: {game.airport}" )
+        self.win.addstr(1, x, f"${game.money}" )
+
+
+
     def draw_waypoints(self, cam, waypoints):
         last = cam.project_gps(waypoints[0])
         for i in range(1, len(waypoints)):
@@ -426,30 +436,69 @@ def animate_travel(gfx, cam, waypoints):
         anim_t0 = anim_t1
 
 
-def main():
-    db = database.Database()
+def popup(game, text, options):
 
-    # Curses initialization
-    win = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    win.keypad(True)
-    win.clear()
-    curses.curs_set(0)
-    curses.start_color()
-    curses.use_default_colors()
-    # Colors
-    curses.init_pair(1, 15, 0)
-    curses.init_pair(2, 9, 0)
-    curses.init_pair(3, 10, 0)
+    gfx = game.gfx
+
+    popup_w = 40
+    popup_h = 10
+    #text = [
+    #    "This is a popup window. Use arrow",
+    #    "keys to change selection, enter to",
+    #    "choose."
+    #]
+    #options = ["Okay", "Cancel"]
+
+    sel = 0
 
 
-    pos = db.airport_xy_icao("EFHK")
+    while True:
+        gfx.draw_map(game.cam)
+        gfx.fb.scanout()
 
-    fb = FrameBuffer(win)
-    cam = Camera()
-    gfx = MapRenderer(fb)
+        x = gfx.fb.w // 2 - popup_w // 2
+        y = gfx.fb.h // 2 - popup_h // 2
 
+        gfx.win.addstr(y, x, "+" + ("-")*(popup_w-2) + "+")
+        y+=1
+        for line in text:
+            gfx.win.addstr(y, x, f"| {" "*(popup_w-4)} |")
+            gfx.win.addstr(y, x+2, line)
+            y+=1
+
+        gfx.win.addstr(y, x, f"| {" "*(popup_w-4)} |")
+        y+=1
+
+        for i in range(len(options)):
+            line = options[i]
+            gfx.win.addstr(y, x, f"| {" "*(popup_w-4)} |")
+            gfx.win.addstr(y, x+2, ("> " if i==sel else "  ") + line)
+            y+=1
+
+        gfx.win.addstr(y, x, "|" + (" ")*(popup_w-2) + "|")
+        y+=1
+        gfx.win.addstr(y, x, "+" + ("-")*(popup_w-2) + "+")
+
+        gfx.win.refresh()
+
+        ch = gfx.win.getch()
+
+        if ch == curses.KEY_ENTER or ch == 10 or ch == 13:
+            return options[sel]
+        elif ch == ord("w"):
+            sel -= 1
+        elif ch == ord("s"):
+            sel += 1
+
+        sel = max(0, min(sel, len(options)-1))
+
+
+def freecam(game):
+
+    gfx = game.gfx
+    cam = game.cam
+
+    pos = game.db.airport_xy_icao("EFHK")
     while True:
         t_start = time.time()
 
@@ -463,25 +512,26 @@ def main():
         waypoints = compute_geodesic(pos, cam.gps)
         gfx.draw_waypoints(cam, waypoints)
 
-        fb.scanout()
+        gfx.fb.scanout()
 
+        #gfx.draw_gamestate(game)
 
         t_end = time.time()
 
         if (cam.zoom <= 15.0):
-            draw_all_airports(fb, cam, db.con)
+            draw_all_airports(gfx.fb, cam, game.db.con)
         #put_gps_text(fb, cam, airport_a, "EFHK")
 
-        win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}, {win.getmaxyx()} {gps_to_mercator(cam.gps)}")
-        win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle reprojection, Enter to animate travel")
-        win.addstr(2,0,f"{pos}")
+        #gfx.win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}, {win.getmaxyx()} {gps_to_mercator(cam.gps)}")
+        #gfx.win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle reprojection, Enter to animate travel")
+        #gfx.win.addstr(2,0,f"{pos}")
         #win.addstr(2,0,f"Distance: { geodesic( (airport_a[1],airport_a[0]), (cam.gps[1],cam.gps[0]) ).km }")
-        win.refresh()
+        gfx.win.refresh()
 
         # Input handling
         # Python is stupid
         pan_speed = 0.1
-        ch = win.getch()
+        ch = gfx.win.getch()
         if ch == ord("q"):
             break
 
@@ -514,9 +564,167 @@ def main():
         elif ch == ord("x"):
             cam.zoom *= 0.5
 
+        elif ch == ord("P"):
+            popup(gfx, cam)
+
         elif ch == ord("p"):
             global disable_mercator
             disable_mercator = not disable_mercator
+
+def menu_find_customers(game):
+    customers = game.db.customers_from_airport(game.airport)
+    # Make sure airport has at least 3 customers
+    for i in range(0, max(3 - len(customers), 0)):
+        customer = Customer(game.db)
+        customer.generate(game.airport)
+        customer.save()
+    # Reload customers in case of changes
+    customers = game.db.customers_from_airport(game.airport)
+
+    txt = []
+    cmd = []
+    i = 0
+    for customer in customers:
+        i+=1
+        if (customer.accepted):
+            continue
+        txt.append(f"#{i}: {customer.name}")
+        txt.append(f"{customer.origin} -> {customer.destination}")
+        txt.append(f"Reward: ${customer.reward}")
+
+        txt.append(f"")
+
+        cmd.append(f"Board customer #{i}")
+
+    cmd.append(f"Return")
+    action = popup(game, txt, cmd)
+
+    argv = action.split("#")
+    if (len(argv) == 2):
+        index = int(argv[1])-1
+        customers[index].accept()
+
+
+
+def menu_fly(game):
+    customers = game.db.accepted_customers()
+
+    txt = []
+    cmd = []
+    i = 0
+
+    for customer in customers:
+        i+=1
+        txt.append(f"#{i}: {customer.name}")
+        txt.append(f"{customer.origin} -> {customer.destination}")
+        txt.append(f"Reward: ${customer.reward}")
+
+        txt.append(f"")
+
+        cmd.append(f"Fly to {customer.destination}")
+
+    cmd.append(f"Fly to KJFK")
+    cmd.append(f"Return")
+    action = popup(game, txt, cmd)
+
+    argv = action.split("Fly to ")
+
+    if (len(argv) == 2):
+        target = argv[1]
+
+        gps_a = game.db.airport_xy_icao(game.airport)
+        gps_b = game.db.airport_xy_icao(target)
+
+        wp = compute_geodesic(gps_a, gps_b)
+        animate_travel(game.gfx, game.cam, wp)
+
+        game.fly_to( target )
+
+
+def main():
+    db = database.Database()
+
+    # Curses initialization
+    win = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    win.keypad(True)
+    win.clear()
+    curses.curs_set(0)
+    curses.start_color()
+    curses.use_default_colors()
+    # Colors
+    curses.init_pair(1, 15, 0)
+    curses.init_pair(2, 9, 0)
+    curses.init_pair(3, 10, 0)
+
+
+    pos = db.airport_xy_icao("EFHK")
+
+    fb = FrameBuffer(win)
+    cam = Camera()
+    cam.gps = pos.copy()
+    gfx = MapRenderer(fb)
+
+
+    game = GameState(db)
+    game.cam = cam
+    game.gfx = gfx
+
+    while True:
+        game.cam.gps = db.airport_xy_icao(game.airport)
+
+        customers_on_board   = game.db.accepted_customers()
+        for customer in customers_on_board:
+            if game.airport != customer.destination:
+                continue
+            popup(game,
+                [f"You have completed {customer.name}'s",
+                 f"flight, and were rewarded ${customer.reward}"],
+
+                ["Ok"]
+            )
+            game.money += customer.reward
+            customer.drop()
+
+
+        status = []
+
+        status.append( f"At airport {game.airport}" )
+        status.append( f"Money: ${game.money}" )
+
+        actions = []
+
+        actions.append("Look for customers")
+        actions.append("Fly to destination")
+        actions.append("View your customers (TODO)")
+        actions.append("Developer options")
+        actions.append("Quit game")
+        action = popup(
+            game,
+            status,
+            actions
+        )
+
+        if action == "Developer options":
+            action = popup(game, [], ["Freecam", "Reset"])
+            if action == "Reset":
+                db.reset()
+                popup(game, ["Database reset"], ["Ok"])
+            if action == "Freecam":
+                freecam(game)
+
+        if action == "Look for customers":
+            menu_find_customers(game)
+
+
+        if action == "Fly to destination":
+            menu_fly(game)
+
+        if action == "Quit game":
+            popup(game, ["Bye bye !"], [""])
+            break
+
 
 
     win.keypad(False)
