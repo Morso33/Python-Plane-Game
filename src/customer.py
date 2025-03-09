@@ -1,5 +1,7 @@
 import random
 
+# This sucks but will do for now (+ i dont care)
+
 class Customer:
     def __init__(self, db):
         self.name = f"Customer{random.randint(1000, 9999)}"
@@ -19,8 +21,11 @@ class Customer:
         print("deadline    ", self.deadline)
         print("accepted    ", self.accepted)
 
+
     def summary(self):
         return f"{self.name:15} :: {self.origin:>8} -> {self.destination:8} :: ${self.reward} :: {'airport' if self.accepted==0 else 'boarded'}"
+
+
 
     # Assume cessna for now
     def generate(self, origin_icao, aircraft_type="small"):
@@ -43,7 +48,6 @@ class Customer:
 
 
 
-    # This sucks but good enough for now (i dont care)
 
     def save(self):
         cur = self.db.con.cursor()

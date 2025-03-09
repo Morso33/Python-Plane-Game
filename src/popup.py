@@ -19,8 +19,11 @@ class Popup:
         self.ret = []
         self.offscreen = False
 
-        # Binds for custom rendering (very jank !!)
+        # In case caller needs to execute custom render code, these functions
+        # can be set and will be called appropriately.
+        # Prepass render code can only contain ascii map art render commands
         self.prepass = None
+        # Postpass render code can only do direct-to-terminal text splatting
         self.postpass = None
 
     def add_text(self, text):
@@ -50,28 +53,31 @@ class Popup:
             x = gfx.fb.w // 2 - w // 2
             y = gfx.fb.h // 2 - h // 2
 
+            str_edge = "+" + ("-")*(w-2) + "+"
+            str_panel = f"| {" "*(w-4)} |"
+
             if self.offscreen:
                 x = gfx.fb.w - w
 
-            gfx.win.addstr(y, x, "+" + ("-")*(w-2) + "+")
+            gfx.win.addstr(y, x, str_edge)
             y+=1
             for line in self.txt:
-                gfx.win.addstr(y, x, f"| {" "*(w-4)} |")
+                gfx.win.addstr(y, x, str_panel)
                 gfx.win.addstr(y, x+2, line)
                 y+=1
 
-            gfx.win.addstr(y, x, f"| {" "*(w-4)} |")
+            gfx.win.addstr(y, x, str_panel)
             y+=1
 
             for i in range(len(self.cmd)):
                 line = self.cmd[i]
-                gfx.win.addstr(y, x, f"| {" "*(w-4)} |")
+                gfx.win.addstr(y, x, str_panel)
                 gfx.win.addstr(y, x+2, ("> " if i==sel else "  ") + line)
                 y+=1
 
-            gfx.win.addstr(y, x, "|" + (" ")*(w-2) + "|")
+            gfx.win.addstr(y, x, str_panel)
             y+=1
-            gfx.win.addstr(y, x, "+" + ("-")*(w-2) + "+")
+            gfx.win.addstr(y, x, str_edge)
 
             gfx.win.refresh()
 

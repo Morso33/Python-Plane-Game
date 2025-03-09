@@ -11,6 +11,7 @@ from geopy.distance import geodesic
 
 from customer import Customer
 from popup import Popup
+from vec3 import *
 
 # Coordinate systems
 
@@ -104,6 +105,16 @@ from popup import Popup
 #lut = (" ","▘","▝","▀","▖","▌","▞","▛","▗","▚","▐","▜","▄","▙","▟","█");
 lut = (" ","`","'","\"",",",":","/","F",".","\\",":","\\","_","b","d","-");
 
+# Engine loop architecture
+#
+# This game uses a rather unorthodox engine loop; hardly a loop at all but a
+# stack. As the player interacts with the menus, responsibility over the
+# render loop and input handling is passed from one function to another.
+# A more scalable and tradinional approach would be to manage all of the
+# stack-like state manually and have a large complicated central loop, but we
+# don't need that complexity here.
+
+
 
 def gps_to_usphere(gps_deg):
     gps = ( math.radians(gps_deg[0]-90), math.radians(gps_deg[1]) )
@@ -135,22 +146,6 @@ def gps_to_mercator(gps):
 
 
 
-
-
-def vec3_lenght(vec):
-    return math.sqrt( vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2] );
-
-def vec3_normalize(vec):
-    lenght = vec3_lenght(vec)
-    vec[0] /= lenght
-    vec[1] /= lenght
-    vec[2] /= lenght
-
-
-
-
-
-
 def draw_large_airports(fb, cam, con):
     cur = con.cursor()
     query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="large_airport"'
@@ -172,24 +167,10 @@ def draw_small_airports(fb, cam, con):
     for (lon, lat, ident) in cur:
         put_gps_text(fb, cam, (lon,lat), f"s● {ident}")
 
-def icao_coords(con, key):
-    cur = con.cursor()
-    query = "SELECT longitude_deg, latitude_deg FROM airport WHERE ident=%s"
-    cur.execute(query, (key,))
-    coords = cur.fetchone()
-    if coords == None:
-        print("Virheellinen ICAO-koodi")
-        exit()
-    return [coords[0],coords[1]]
-
-
-
-
 
 # "In geometry, a geodesic is a curve representing the locally
 # shortest path (arc) between two points in a surface" - Wikipedia
 # This is ultimately just a bad sphere lerp
-
 def compute_geodesic(gps_a, gps_b):
     waypoints = []
 
@@ -214,7 +195,6 @@ def compute_geodesic(gps_a, gps_b):
 
         waypoints.append(gps)
     return waypoints
-
 
 
 
@@ -634,6 +614,9 @@ def choose_airport_from_map(game):
             global disable_mercator
             disable_mercator = not disable_mercator
 
+
+
+
 def customers_postpass(game):
     customers = game.db.customers_from_airport(game.airport)
     i = 0
@@ -651,11 +634,9 @@ def customers_prepass(game):
         game.gfx.draw_waypoints(game.cam, wp)
 
 
-
 def menu_find_customers(game):
     customers = game.db.customers_from_airport(game.airport)
-    # Make sure airport has at least 3 customers
-
+    # Make sure airport has at least N customers
     cur_type = game.db.airport_type_icao(game.airport)
     customer_count = 0
     match cur_type:
@@ -776,8 +757,6 @@ class GameState:
         # Zoom out the map to at least 15deg zoom for flights
         self.cam.zoom = max(self.cam.zoom, 15)
 
-
-
         gps_a = self.db.airport_xy_icao(self.airport)
         gps_b = self.db.airport_xy_icao(target)
 
@@ -812,6 +791,8 @@ def main():
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")
         popup.add_option("View your customers (TODO)")
+        popup.add_option("Hangar")
+        popup.add_option("")
         popup.add_option("Developer options")
         popup.add_option("Quit game")
         action = popup.run()
@@ -836,8 +817,6 @@ def main():
         elif action == "Quit game":
             impopup(game, [], ["Bye bye !"])
             break
-
-
 
     game.win.keypad(False)
     curses.nocbreak()
