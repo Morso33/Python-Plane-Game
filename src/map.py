@@ -151,14 +151,26 @@ def vec3_normalize(vec):
 
 
 
-def draw_all_airports(fb, cam, con):
+def draw_large_airports(fb, cam, con):
     cur = con.cursor()
     query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="large_airport"'
     cur.execute(query)
-
     for (lon, lat, ident) in cur:
         put_gps_text(fb, cam, (lon,lat), f"● {ident}")
 
+def draw_medium_airports(fb, cam, con):
+    cur = con.cursor()
+    query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="medium_airport"'
+    cur.execute(query)
+    for (lon, lat, ident) in cur:
+        put_gps_text(fb, cam, (lon,lat), f"○ {ident}")
+
+def draw_small_airports(fb, cam, con):
+    cur = con.cursor()
+    query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="small_airport"'
+    cur.execute(query)
+    for (lon, lat, ident) in cur:
+        put_gps_text(fb, cam, (lon,lat), f"s● {ident}")
 
 def icao_coords(con, key):
     cur = con.cursor()
@@ -480,10 +492,15 @@ def freecam(game):
         t_end = time.time()
 
         if (cam.zoom <= 15.0):
-            draw_all_airports(gfx.fb, cam, game.db.con)
+            draw_large_airports(gfx.fb, cam, game.db.con)
+        #if (cam.zoom <= 3.75):
+        if (cam.zoom <= 7.5):
+            draw_medium_airports(gfx.fb, cam, game.db.con)
+        #if (cam.zoom <= 1.00):
+        #    draw_small_airports(gfx.fb, cam, game.db.con)
         #put_gps_text(fb, cam, airport_a, "EFHK")
 
-        #gfx.win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}, {win.getmaxyx()} {gps_to_mercator(cam.gps)}")
+        gfx.win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}")
         #gfx.win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle reprojection, Enter to animate travel")
         #gfx.win.addstr(2,0,f"{pos}")
         #win.addstr(2,0,f"Distance: { geodesic( (airport_a[1],airport_a[0]), (cam.gps[1],cam.gps[0]) ).km }")
@@ -530,6 +547,93 @@ def freecam(game):
             disable_mercator = not disable_mercator
 
 
+def choose_airport_from_map(game):
+
+    gfx = game.gfx
+    cam = game.cam
+
+    pos = game.db.airport_xy_icao(game.airport)
+    while True:
+        t_start = time.time()
+
+        gfx.draw_map(cam)
+
+        closest_icao = game.airport
+        closest_distance = float('inf')
+        if True:
+            cur = game.db.con.cursor()
+            query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="large_airport"'
+            if (cam.zoom <= 7.5):
+                query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type IN ("medium_airport", "large_airport")'
+            cur.execute(query)
+            for (lon, lat, ident) in cur:
+                put_gps_text(game.gfx.fb, cam, (lon,lat), f"● {ident}")
+                # Square root not necessary, we don't need the true distance,
+                # only relative.
+                distance = (lon - cam.gps[0])**2 + (lat - cam.gps[1])**2
+                if (closest_distance > distance):
+                    closest_distance = distance
+                    closest_icao = ident
+
+
+        waypoints = compute_geodesic(pos, game.db.airport_xy_icao(closest_icao))
+        gfx.draw_waypoints(cam, waypoints)
+
+        gfx.fb.scanout()
+
+        #gfx.draw_gamestate(game)
+
+        t_end = time.time()
+
+        if (cam.zoom <= 15.0):
+            draw_large_airports(gfx.fb, cam, game.db.con)
+        #if (cam.zoom <= 3.75):
+        if (cam.zoom <= 7.5):
+            draw_medium_airports(gfx.fb, cam, game.db.con)
+        #if (cam.zoom <= 1.00):
+        #    draw_small_airports(gfx.fb, cam, game.db.con)
+        #put_gps_text(fb, cam, airport_a, "EFHK")
+
+        gfx.win.addstr( gfx.fb.h//2, gfx.fb.w//2, "X" )
+
+        gfx.win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}")
+        #gfx.win.addstr(1,0,f"Controls: wasd to move, zx to zoom, p to toggle reprojection, Enter to animate travel")
+        gfx.win.addstr(2,0,f"Closest: {closest_icao}")
+        #win.addstr(2,0,f"Distance: { geodesic( (airport_a[1],airport_a[0]), (cam.gps[1],cam.gps[0]) ).km }")
+        gfx.win.refresh()
+
+        # Input handling
+        # Python is stupid
+        pan_speed = 0.075
+        ch = gfx.win.getch()
+        if ch == ord("q"):
+            return ""
+
+        elif ch == ord("a") or ch == curses.KEY_LEFT:
+            cam.gps[0] -= cam.zoom * pan_speed
+
+        elif ch == ord("d") or ch == curses.KEY_RIGHT:
+            cam.gps[0] += cam.zoom * pan_speed
+
+        elif ch == ord("w") or ch == curses.KEY_UP:
+            cam.gps[1] += cam.zoom * pan_speed
+
+        elif ch == ord("s") or ch == curses.KEY_DOWN:
+            cam.gps[1] -= cam.zoom * pan_speed
+
+        elif ch == curses.KEY_ENTER or ch == 10 or ch == 13:
+            return closest_icao
+
+        elif ch == ord("z"):
+            cam.zoom *= 2.0
+
+        elif ch == ord("x"):
+            cam.zoom *= 0.5
+
+        elif ch == ord("p"):
+            global disable_mercator
+            disable_mercator = not disable_mercator
+
 
 def menu_find_customers(game):
     customers = game.db.customers_from_airport(game.airport)
@@ -549,8 +653,11 @@ def menu_find_customers(game):
         if (customer.accepted):
             continue
         popup.add_text(f"#{i}: {customer.name}")
+        distance = game.db.icao_distance(customer.origin, customer.destination)
         popup.add_text(f"{customer.origin} -> {customer.destination}")
-        popup.add_text(f"Reward: ${customer.reward}")
+
+        popup.add_text(f"Distance: {int(distance)} km")
+        popup.add_text(f"Reward:   $ {customer.reward}")
         popup.add_text(f"")
         popup.add_option(f"Board customer #{i}", i)
 
@@ -580,9 +687,12 @@ def menu_fly(game):
 
         popup.add_option(f"Fly to {customer.destination}", customer.destination)
 
+    popup.add_option(f"Choose on map")
     popup.add_option(f"Return")
     target = popup.run()
 
+    if (target == "Choose on map"):
+        target = choose_airport_from_map(game)
 
     game.fly_to( target )
 
@@ -674,7 +784,7 @@ def main():
         if action == "Developer options":
             action = impopup(game, [], ["Freecam", "Reset", "Fly to KJFK", "Return"])
             if action == "Reset":
-                db.reset()
+                game.db.reset()
                 impopup(game, ["Database reset"], ["Ok"])
             elif action == "Freecam":
                 freecam(game)

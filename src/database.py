@@ -1,4 +1,6 @@
 import mariadb
+from geopy.distance import great_circle
+from geopy.distance import geodesic
 
 from customer import Customer
 
@@ -88,6 +90,20 @@ class Database():
             return False
         return True
 
+    def icao_distance(self, icao_a, icao_b):
+        a = self.airport_yx_icao(icao_a);
+        b = self.airport_yx_icao(icao_b);
+        return geodesic(a, b).km
+
+    def airport_yx_icao(self, key):
+        cur = self.con.cursor()
+        query = "SELECT longitude_deg, latitude_deg FROM airport WHERE ident=%s"
+        cur.execute(query, (key,))
+        coords = cur.fetchone()
+        if coords == None:
+            print("Virheellinen ICAO-koodi")
+            exit()
+        return [coords[0],coords[1]]
 
     def airport_xy_icao(self, key):
         cur = self.con.cursor()
