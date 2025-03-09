@@ -10,7 +10,6 @@ from geopy.distance import great_circle
 from geopy.distance import geodesic
 
 from customer import Customer
-from game import GameState
 from popup import Popup
 
 # Coordinate systems
@@ -497,16 +496,16 @@ def freecam(game):
         if ch == ord("q"):
             break
 
-        elif ch == ord("a"):
+        elif ch == ord("a") or ch == curses.KEY_LEFT:
             cam.gps[0] -= cam.zoom * pan_speed
 
-        elif ch == ord("d"):
+        elif ch == ord("d") or ch == curses.KEY_RIGHT:
             cam.gps[0] += cam.zoom * pan_speed
 
-        elif ch == ord("w"):
+        elif ch == ord("w") or ch == curses.KEY_UP:
             cam.gps[1] += cam.zoom * pan_speed
 
-        elif ch == ord("s"):
+        elif ch == ord("s") or ch == curses.KEY_DOWN:
             cam.gps[1] -= cam.zoom * pan_speed
 
         elif ch == curses.KEY_ENTER or ch == 10 or ch == 13:
@@ -553,15 +552,15 @@ def menu_find_customers(game):
         popup.add_text(f"{customer.origin} -> {customer.destination}")
         popup.add_text(f"Reward: ${customer.reward}")
         popup.add_text(f"")
-        popup.add_option(f"Board customer #{i}")
+        popup.add_option(f"Board customer #{i}", i)
 
     popup.add_option(f"Return")
     action = popup.run()
 
-    argv = action.split("#")
-    if (len(argv) == 2):
-        index = int(argv[1])-1
-        customers[index].accept()
+    if action == "Return":
+        return
+
+    customers[action-1].accept()
 
 
 
@@ -581,52 +580,74 @@ def menu_fly(game):
 
         popup.add_option(f"Fly to {customer.destination}", customer.destination)
 
-    popup.add_option(f"Fly to KJFK", "KJFK")
     popup.add_option(f"Return")
     target = popup.run()
 
-    if (game.db.icao_exists(target)):
-        gps_a = game.db.airport_xy_icao(game.airport)
-        gps_b = game.db.airport_xy_icao(target)
+
+    game.fly_to( target )
+
+
+
+
+
+class GameState:
+    def __init__(self):
+
+        self.money = 5000
+        self.airport = "EFHK"
+
+
+        self.db = database.Database()
+
+        # Curses initialization
+        win = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        win.keypad(True)
+        win.clear()
+        curses.curs_set(0)
+        curses.start_color()
+        curses.use_default_colors()
+        # Colors
+        curses.init_pair(1, 15, 0)
+        curses.init_pair(2, 9, 0)
+        curses.init_pair(3, 10, 0)
+
+
+        pos = self.db.airport_xy_icao("EFHK")
+
+        fb = FrameBuffer(win)
+        cam = Camera()
+        cam.gps = pos.copy()
+        gfx = MapRenderer(fb)
+
+
+        self.cam = cam
+        self.gfx = gfx
+        self.win = win
+
+
+    def fly_to(self, icao):
+        target = icao.upper()
+
+        if not self.db.icao_exists(target):
+            return
+
+        gps_a = self.db.airport_xy_icao(self.airport)
+        gps_b = self.db.airport_xy_icao(target)
 
         wp = compute_geodesic(gps_a, gps_b)
-        animate_travel(game.gfx, game.cam, wp)
+        animate_travel(self.gfx, self.cam, wp)
 
-        game.fly_to( target )
+        self.airport = target
+
 
 
 def main():
-    db = database.Database()
-
-    # Curses initialization
-    win = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    win.keypad(True)
-    win.clear()
-    curses.curs_set(0)
-    curses.start_color()
-    curses.use_default_colors()
-    # Colors
-    curses.init_pair(1, 15, 0)
-    curses.init_pair(2, 9, 0)
-    curses.init_pair(3, 10, 0)
-
-
-    pos = db.airport_xy_icao("EFHK")
-
-    fb = FrameBuffer(win)
-    cam = Camera()
-    cam.gps = pos.copy()
-    gfx = MapRenderer(fb)
-
-
-    game = GameState(db)
-    game.cam = cam
-    game.gfx = gfx
+    game = GameState()
 
     while True:
-        game.cam.gps = db.airport_xy_icao(game.airport)
+        game.cam.gps = game.db.airport_xy_icao(game.airport)
 
         customers_on_board   = game.db.accepted_customers()
         for customer in customers_on_board:
@@ -651,27 +672,29 @@ def main():
         action = popup.run()
 
         if action == "Developer options":
-            action = impopup(game, [], ["Freecam", "Reset", "Return"])
+            action = impopup(game, [], ["Freecam", "Reset", "Fly to KJFK", "Return"])
             if action == "Reset":
                 db.reset()
                 impopup(game, ["Database reset"], ["Ok"])
-            if action == "Freecam":
+            elif action == "Freecam":
                 freecam(game)
+            elif action == "Fly to KJFK":
+                game.fly_to("KJFK")
 
-        if action == "Look for customers":
+        elif action == "Look for customers":
             menu_find_customers(game)
 
 
-        if action == "Fly to destination":
+        elif action == "Fly to destination":
             menu_fly(game)
 
-        if action == "Quit game":
+        elif action == "Quit game":
             impopup(game, [], ["Bye bye !"])
             break
 
 
 
-    win.keypad(False)
+    game.win.keypad(False)
     curses.nocbreak()
     curses.echo()
     curses.endwin()

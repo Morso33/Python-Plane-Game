@@ -70,9 +70,9 @@ class Popup:
                 if ret != None:
                     return ret
                 return self.cmd[sel]
-            elif ch == ord("w"):
+            elif ch == ord("w") or ch == curses.KEY_UP:
                 sel -= 1
-            elif ch == ord("s"):
+            elif ch == ord("s") or ch == curses.KEY_DOWN:
                 sel += 1
 
             sel = max(0, min(sel, len(self.cmd)-1))
