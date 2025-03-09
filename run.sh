@@ -3,6 +3,6 @@
 
 . ./venv/bin/activate
 
-python ./src/map.py
+python ./src/main.py
 
 

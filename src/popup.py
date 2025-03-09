@@ -94,3 +94,17 @@ class Popup:
                 sel += 1
 
             sel = max(0, min(sel, len(self.cmd)-1))
+
+
+# Immediate popup, convenience function for simple things
+# Yes we procedualice OOP code, deal with it
+def impopup(game, text, options):
+    popup = Popup(game)
+
+    for line in text:
+        popup.add_text(line)
+
+    for line in options:
+        popup.add_option(line)
+
+    return popup.run()
