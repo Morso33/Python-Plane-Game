@@ -1,6 +1,8 @@
 import textwrap
 import curses
 
+# View menu_fly() function in main.py for a simple usage example
+
 def split_text(text, max_length):
     lines = text.split('\n')
     wrapped_lines = []
@@ -30,6 +32,8 @@ class Popup:
         self.txt.extend( split_text(text, self.w - 4) )
         return
 
+    # The payload is returned instead of the label if set, if player selects
+    # this option
     def add_option(self, label, payload=None):
         self.cmd.append(label)
         self.ret.append(payload)
@@ -81,8 +85,8 @@ class Popup:
 
             gfx.win.refresh()
 
+            # Input handling
             ch = gfx.win.getch()
-
             if ch == curses.KEY_ENTER or ch == 10 or ch == 13:
                 ret = self.ret[sel]
                 if ret != None:
