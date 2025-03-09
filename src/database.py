@@ -47,10 +47,12 @@ class Database():
 
                 name        VARCHAR(40) NOT NULL,
 
-                origin      varchar(40),
-                destination varchar(40),
+                origin      varchar(40) NOT NULL,
+                destination varchar(40) NOT NULL,
 
                 deadline    int     NOT NULL,
+                reward      int     NOT NULL,
+                accepted    int     NOT NULL,
 
                 PRIMARY KEY (id),
 
