@@ -441,16 +441,16 @@ def animate_travel(gfx, cam, waypoints):
 
 
 
-def popup(game, text, options):
-    menu = Popup(game)
+def impopup(game, text, options):
+    popup = Popup(game)
 
     for line in text:
-        menu.add_text(line)
+        popup.add_text(line)
 
     for line in options:
-        menu.add_option(line)
+        popup.add_option(line)
 
-    return menu.run()
+    return popup.run()
 
 
 
@@ -526,9 +526,6 @@ def freecam(game):
         elif ch == ord("x"):
             cam.zoom *= 0.5
 
-        elif ch == ord("P"):
-            popup(gfx, cam)
-
         elif ch == ord("p"):
             global disable_mercator
             disable_mercator = not disable_mercator
@@ -545,23 +542,21 @@ def menu_find_customers(game):
     # Reload customers in case of changes
     customers = game.db.customers_from_airport(game.airport)
 
-    txt = []
-    cmd = []
+    popup = Popup(game)
+
     i = 0
     for customer in customers:
         i+=1
         if (customer.accepted):
             continue
-        txt.append(f"#{i}: {customer.name}")
-        txt.append(f"{customer.origin} -> {customer.destination}")
-        txt.append(f"Reward: ${customer.reward}")
+        popup.add_text(f"#{i}: {customer.name}")
+        popup.add_text(f"{customer.origin} -> {customer.destination}")
+        popup.add_text(f"Reward: ${customer.reward}")
+        popup.add_text(f"")
+        popup.add_option(f"Board customer #{i}")
 
-        txt.append(f"")
-
-        cmd.append(f"Board customer #{i}")
-
-    cmd.append(f"Return")
-    action = popup(game, txt, cmd)
+    popup.add_option(f"Return")
+    action = popup.run()
 
     argv = action.split("#")
     if (len(argv) == 2):
@@ -573,22 +568,22 @@ def menu_find_customers(game):
 def menu_fly(game):
     customers = game.db.accepted_customers()
 
-    menu = Popup(game)
+    popup = Popup(game)
 
     i = 0
 
     for customer in customers:
         i+=1
-        menu.add_text(f"#{i}: {customer.name}")
-        menu.add_text(f"{customer.origin} -> {customer.destination}")
-        menu.add_text(f"Reward: ${customer.reward}")
-        menu.add_text(f"")
+        popup.add_text(f"#{i}: {customer.name}")
+        popup.add_text(f"{customer.origin} -> {customer.destination}")
+        popup.add_text(f"Reward: ${customer.reward}")
+        popup.add_text(f"")
 
-        menu.add_option(f"Fly to {customer.destination}", customer.destination)
+        popup.add_option(f"Fly to {customer.destination}", customer.destination)
 
-    menu.add_option(f"Fly to KJFK", "KJFK")
-    menu.add_option(f"Return")
-    target = menu.run()
+    popup.add_option(f"Fly to KJFK", "KJFK")
+    popup.add_option(f"Return")
+    target = popup.run()
 
     if (game.db.icao_exists(target)):
         gps_a = game.db.airport_xy_icao(game.airport)
@@ -637,7 +632,7 @@ def main():
         for customer in customers_on_board:
             if game.airport != customer.destination:
                 continue
-            popup(game,
+            impopup(game,
                 [f"You have completed {customer.name}'s flight, and were rewarded ${customer.reward}"],
                 ["Ok"]
             )
@@ -645,21 +640,21 @@ def main():
             customer.drop()
 
 
-        menu = Popup(game)
-        menu.add_text(f"At airport {game.airport}" )
-        menu.add_text(f"Money: ${game.money}" )
-        menu.add_option("Look for customers")
-        menu.add_option("Fly to destination")
-        menu.add_option("View your customers (TODO)")
-        menu.add_option("Developer options")
-        menu.add_option("Quit game")
-        action = menu.run()
+        popup = Popup(game)
+        popup.add_text(f"At airport {game.airport}" )
+        popup.add_text(f"Money: ${game.money}" )
+        popup.add_option("Look for customers")
+        popup.add_option("Fly to destination")
+        popup.add_option("View your customers (TODO)")
+        popup.add_option("Developer options")
+        popup.add_option("Quit game")
+        action = popup.run()
 
         if action == "Developer options":
-            action = popup(game, [], ["Freecam", "Reset", "Return"])
+            action = impopup(game, [], ["Freecam", "Reset", "Return"])
             if action == "Reset":
                 db.reset()
-                popup(game, ["Database reset"], ["Ok"])
+                impopup(game, ["Database reset"], ["Ok"])
             if action == "Freecam":
                 freecam(game)
 
@@ -671,7 +666,7 @@ def main():
             menu_fly(game)
 
         if action == "Quit game":
-            popup(game, [], ["Bye bye !"])
+            impopup(game, [], ["Bye bye !"])
             break
 
 
