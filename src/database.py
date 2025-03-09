@@ -23,7 +23,7 @@ class Database():
             self.reset()
 
         # Reset anyway for now
-        self.reset()
+        #self.reset()
 
 
      # Write the database schema here !!!
@@ -43,7 +43,7 @@ class Database():
         cur.execute("DROP TABLE IF EXISTS customer;")
         cur.execute("""
             CREATE TABLE customer (
-                id          int     NOT NULL,
+                id          int     NOT NULL AUTO_INCREMENT,
 
                 name        VARCHAR(40) NOT NULL,
 
@@ -75,7 +75,6 @@ class Database():
     def metadata_set(self, key, value):
         cur = self.con.cursor()
         cur.execute("REPLACE INTO metadata (id, value) VALUES (?, ?)", (key,value))
-
 
 
 
