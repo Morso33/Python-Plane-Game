@@ -1,5 +1,6 @@
 import textwrap
 import curses
+import time
 
 # View menu_fly() function in main.py for a simple usage example
 
@@ -45,8 +46,15 @@ class Popup:
 
         sel = 0
         w = self.w
-        h = self.h
+        h = 3 + len(self.txt) + len(self.cmd)
         while True:
+            gfx.fb.update()
+            if h >= gfx.fb.h or w >= gfx.fb.w:
+                gfx.win.clear()
+                gfx.win.addstr(0,0, "Your terminal is too small.")
+                gfx.win.refresh()
+                time.sleep(0.1)
+                continue
             gfx.draw_map(game.cam)
             if self.prepass != None:
                 self.prepass(game)
