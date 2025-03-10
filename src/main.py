@@ -385,12 +385,14 @@ def main():
         for customer in customers_on_board:
             if game.airport != customer.destination:
                 continue
-            impopup(game,
-                [f"You have completed {customer.name}'s flight, and were rewarded ${customer.reward}"],
-                ["Ok"]
-            )
-            game.money += customer.reward
-            customer.drop()
+            do_default = game.quests.completed_customer_flight(customer)
+            if do_default:
+                impopup(game,
+                    [f"You have completed {customer.name}'s flight, and were rewarded ${customer.reward}"],
+                    ["Ok"]
+                )
+                game.money += customer.reward
+                customer.drop()
 
         popup = Popup(game)
         popup.add_text(f"At airport {game.airport}" )
