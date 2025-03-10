@@ -265,18 +265,24 @@ def menu_hangar(game):
 
 
 def draw_large_airports(fb, cam, con):
-    cur = con.cursor()
-    query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="large_airport"'
-    cur.execute(query)
-    for (lon, lat, ident) in cur:
-        put_gps_text(fb, cam, (lon,lat), f"● {ident}")
+    try:
+        cur = con.cursor()
+        query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="large_airport"'
+        cur.execute(query)
+        for (lon, lat, ident) in cur:
+            put_gps_text(fb, cam, (lon, lat), f"● {ident}")
+    except Exception as e:
+        print(f"Error fetching large airports: {e}")
 
 def draw_medium_airports(fb, cam, con):
-    cur = con.cursor()
-    query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="medium_airport"'
-    cur.execute(query)
-    for (lon, lat, ident) in cur:
-        put_gps_text(fb, cam, (lon,lat), f"○ {ident}")
+    try:
+        cur = con.cursor()
+        query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type="medium_airport"'
+        cur.execute(query)
+        for (lon, lat, ident) in cur:
+            put_gps_text(fb, cam, (lon, lat), f"● {ident}")
+    except Exception as e:
+        print(f"Error fetching medium airports: {e}")
 
 
 def freecam(game):
