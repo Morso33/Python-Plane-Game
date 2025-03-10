@@ -91,11 +91,11 @@ class Database():
         );""")
 
         cur.execute("""
-        INSERT INTO aircraft (id, name, category, capacity, speed_kmh, range_km, fuel_tank_l, fuel_consumption_lph, co2_emissions_kgph, price_million) VALUES
-        (1, 'Cessna 208 Caravan', 'Small', 9, 340, 1700, 1300, 220, 560, 3.00),
-        (2, 'Learjet 75', 'Medium', 12, 860, 3700, 6000, 700, 1900, 5.25),
-        (3, 'Boeing 747-8', 'Large', 400, 920, 14000, 240000, 12000, 30000, 250.00),
-        (4, 'Boeing 747-8 VIP', 'Large', 50, 920, 14000, 240000, 12000, 30000, 250.00);
+        INSERT INTO aircraft (id, name, category, capacity, speed_kmh, range_km, fuel_tank_l, fuel_consumption_lph, co2_emissions_kgph, price_million, owned) VALUES
+        (1, 'Cessna 208 Caravan', 'Small', 9, 340, 1700, 1300, 220, 560, 3.00, 1),
+        (2, 'Learjet 75', 'Medium', 12, 860, 3700, 6000, 700, 1900, 5.25, 0),
+        (3, 'Boeing 747-8', 'Large', 400, 920, 14000, 240000, 12000, 30000, 250.00, 0),
+        (4, 'Boeing 747-8 VIP', 'Large', 50, 920, 14000, 240000, 12000, 30000, 250.00, 0);
         """)
 
         # THIS MUST BE THE LAST LINE OF THIS FUNCTION
@@ -206,3 +206,15 @@ class Database():
             customers.append(c)
 
         return customers
+    
+    def get_all_aircraft(self):
+        cur = self.con.cursor()
+        query = "SELECT * FROM aircraft ORDER BY id"
+        cur.execute(query)
+        result = cur.fetchall()
+        return result
+
+
+    def kill_all_customers(self):
+        cur = self.con.cursor()
+        cur.execute("DELETE FROM customer")

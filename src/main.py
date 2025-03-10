@@ -9,6 +9,8 @@ from quest import QuestManager
 from geopy.distance import great_circle
 from geopy.distance import geodesic
 
+import aircraft
+
 # Engine loop architecture
 #
 # This game uses a rather unorthodox engine loop; hardly a loop at all but a
@@ -216,6 +218,50 @@ def menu_fly(game):
     game.fly_to( target )
 
 
+def menu_hangar(game):
+    all_aircraft = game.db.get_all_aircraft()
+    popup = Popup(game)
+    popup.add_text("Hangar")
+    popup.add_text(f"Selected aircraft: {aircraft.selected_aircraft}")
+    i = 0
+    for ac in all_aircraft:
+        i+=1
+        #Get aircraft name
+        popup.add_option(f"#{i}: {ac[1]}" + (" [Owned]" if ac[10] else ""), ac[0])
+    popup.add_option("Return")
+    target = popup.run()
+
+    if target == "Return":
+        return
+    
+    if not all_aircraft[int(target)-1][10]:
+        popup = Popup(game)
+        popup.add_text(f"Purchase {all_aircraft[target-1][1]} for ${all_aircraft[target-1][9]} million?")
+        popup.add_option("Yes")
+        popup.add_option("No")
+        action = popup.run()
+        if action == "Yes":
+
+            if game.money < all_aircraft[target-1][9] * 1_000_000:
+                impopup(game, ["Not enough money"], ["OK"])
+            else:
+                aircraft.purchase_aircraft(game.db.con, all_aircraft[target-1][1])
+                impopup(game, [f"{all_aircraft[target-1][1]} purchased"], ["OK"])
+    else:
+        popup = Popup(game)
+        popup.add_text("Select aircraft?")
+        popup.add_option("Yes")
+        popup.add_option("No")
+        action = popup.run()
+        if action == "Yes":
+            aircraft.selected_aircraft = all_aircraft[target-1][1]
+            impopup(game, [f"{all_aircraft[target-1][1]} selected"], ["OK"])
+            #Kill all customers
+            game.db.kill_all_customers()
+
+
+
+
 
 
 def draw_large_airports(fb, cam, con):
@@ -399,7 +445,7 @@ def main():
         popup.add_text(f"Money: ${game.money}" )
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")
-        popup.add_option("View your customers (TODO)")
+        popup.add_option("View your customers")
         popup.add_option("Hangar")
         popup.add_option("")
         popup.add_option("Developer options")
@@ -412,6 +458,7 @@ def main():
                 "Reset",
                 "Fly to KJFK",
                 "Quest flags",
+                "Force money",
                 "Return"])
             if action == "Reset":
                 game.db.reset()
@@ -423,8 +470,22 @@ def main():
             elif action == "Quest flags":
                 impopup(game, game.quests.all_flags(), ["Return"])
 
+            elif action == "Force money":
+                game.money = 10_000_000
+                impopup(game, ["Money set to 10 million"], ["Ok"])
+                
+
         elif action == "Look for customers":
             menu_find_customers(game)
+
+        elif action == "View your customers":
+            pass
+
+        elif action == "Hangar":
+            menu_hangar(game)
+            
+            
+
 
 
         elif action == "Fly to destination":
