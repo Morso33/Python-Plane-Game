@@ -37,6 +37,8 @@ class Customer:
         result = cur.fetchone()
         self.destination = result[0]
 
+        distance = self.db.icao_distance(origin_icao,result[0])
+
         # Todo split this monstrosity
         self.reward = aircraft.get_payout(distance, aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft()), aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft()))
 
@@ -49,7 +51,6 @@ class Customer:
         result = cur.fetchone()
         self.destination = result[0]
 
-        #self.reward = 1000 * random.randint(1, 5)
         distance = self.db.icao_distance(origin_icao,result[0])
 
         # Todo split this monstrosity
