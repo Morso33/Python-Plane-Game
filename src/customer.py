@@ -1,6 +1,5 @@
 import random
-
-# This sucks but will do for now (+ i dont care)
+import aircraft
 
 class Customer:
     def __init__(self, db):
@@ -37,7 +36,7 @@ class Customer:
             result = cur.fetchone()
             #Calculate distance
             distance = self.db.icao_distance(origin_icao,result[0])
-            if distance > 1000:
+            if distance > aircraft.get_aircraft_range(self.db.con, aircraft.get_selected_aircraft()):
                 continue
 
 
@@ -57,7 +56,7 @@ class Customer:
 
             #Calculate distance
             distance = self.db.icao_distance(origin_icao,result[0])
-            if distance > 1000:
+            if distance > aircraft.get_aircraft_range(self.db.con, aircraft.get_selected_aircraft()):
                 continue
 
             self.destination = result[0]

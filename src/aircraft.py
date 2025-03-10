@@ -1,3 +1,8 @@
+selected_aircraft = "Cessna 208 Caravan"
+
+def get_selected_aircraft():
+    return selected_aircraft
+
 def get_aircraft_range(con, aircraft):
     cur = con.cursor()
     query = "SELECT range_km FROM aircraft WHERE name = ?"
