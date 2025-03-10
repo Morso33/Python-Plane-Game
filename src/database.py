@@ -86,7 +86,8 @@ class Database():
             fuel_tank_l INT,
             fuel_consumption_lph INT,
             co2_emissions_kgph INT,
-            price_million DECIMAL(10,2)
+            price_million DECIMAL(10,2),
+            owned INT DEFAULT 0
         );""")
 
         cur.execute("""
