@@ -5,7 +5,7 @@ from geopy.distance import geodesic
 from customer import Customer
 
 # Change this value to cause database to reset
-SCHEMA_VERSION = "6"
+SCHEMA_VERSION = "7"
 
 class Database():
     def __init__(self):
@@ -66,6 +66,13 @@ class Database():
             ) DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
         """)
 
+        cur.execute("DROP TABLE IF EXISTS quest;")
+        cur.execute("""
+            CREATE TABLE quest (
+                flag VARCHAR(50) NOT NULL,
+                PRIMARY KEY (flag)
+            );
+        """)
 
         # THIS MUST BE THE LAST LINE OF THIS FUNCTION
         self.metadata_set("schema", SCHEMA_VERSION)
@@ -118,6 +125,16 @@ class Database():
     def airport_country_icao(self, key):
         cur = self.con.cursor()
         query = "SELECT iso_country FROM airport WHERE ident=%s"
+        cur.execute(query, (key,))
+        data = cur.fetchone()
+        if data == None:
+            print("Virheellinen ICAO-koodi")
+            exit()
+        return data[0]
+
+    def airport_municipality(self, key):
+        cur = self.con.cursor()
+        query = "SELECT municipality FROM airport WHERE ident=%s"
         cur.execute(query, (key,))
         data = cur.fetchone()
         if data == None:

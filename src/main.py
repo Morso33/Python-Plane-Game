@@ -4,6 +4,7 @@ import database
 from map import MapRenderer, Camera, FrameBuffer, compute_geodesic, put_gps_text
 from popup import Popup, impopup
 from customer import Customer
+from quest import QuestManager
 
 from geopy.distance import great_circle
 from geopy.distance import geodesic
@@ -50,10 +51,11 @@ class GameState:
         cam.gps = pos.copy()
         gfx = MapRenderer(fb)
 
-
         self.cam = cam
         self.gfx = gfx
         self.win = win
+
+        self.quests = QuestManager(self)
 
 
     def fly_to(self, icao):
@@ -74,12 +76,15 @@ class GameState:
         self.animate_travel(wp)
 
         self.airport = target
+        customers = self.db.customers_from_airport(icao)
+
+        self.quests.arrived_at_airport()
 
     def update_airport(self, icao):
         # Check customers at airport, generate them if necessary
         airport_type = self.db.airport_type_icao(icao)
 
-        customers = self.db.customers_from_airport(icao)
+        customers = self.db.customers_from_airport(self.airport)
 
         if (len(customers) > 0):
             return
@@ -400,7 +405,12 @@ def main():
         action = popup.run()
 
         if action == "Developer options":
-            action = impopup(game, [], ["Freecam", "Reset", "Fly to KJFK", "Return"])
+            action = impopup(game, [], [
+                "Freecam",
+                "Reset",
+                "Fly to KJFK",
+                "Quest flags",
+                "Return"])
             if action == "Reset":
                 game.db.reset()
                 impopup(game, ["Database reset"], ["Ok"])
@@ -408,6 +418,8 @@ def main():
                 freecam(game)
             elif action == "Fly to KJFK":
                 game.fly_to("KJFK")
+            elif action == "Quest flags":
+                impopup(game, game.quests.all_flags(), ["Return"])
 
         elif action == "Look for customers":
             menu_find_customers(game)
