@@ -1,6 +1,7 @@
 import curses
 import time
 import database
+import random
 from map import MapRenderer, Camera, FrameBuffer, compute_geodesic, put_gps_text
 from popup import Popup, impopup
 from customer import Customer
@@ -98,14 +99,12 @@ class GameState:
         customers_tier2 = 0
         match airport_type:
             case "medium_airport":
-                customers_tier1 = 3
+                customers_tier1 = random.randint(1,3)
                 customers_tier2 = 0
             case "large_airport":
-                customers_tier1 = 2
-                customers_tier2 = 3
+                customers_tier1 = random.randint(1,2)
+                customers_tier2 = random.randint(1,3)
 
-        if (aircraft.get_aircraft_type(self.db.con, aircraft.selected_aircraft) == "Small"):
-            customers_tier2 = 0 # Small aircraft can't take large airport customers
 
         for i in range(0, customers_tier1):
             customer = Customer(self.db)
