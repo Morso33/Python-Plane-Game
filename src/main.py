@@ -75,6 +75,25 @@ class GameState:
 
         self.airport = target
 
+    def update_airport(self, icao):
+        # Check customers at airport, generate them if necessary
+        airport_type = self.db.airport_type_icao(icao)
+
+        customers = self.db.customers_from_airport(icao)
+        # Make sure airport has at least N customers
+        customer_count = 0
+        match airport_type:
+            case "small_airport":
+                customer_count = 0
+            case "medium_airport":
+                customer_count = 3
+            case "large_airport":
+                customer_count = 5
+
+        for i in range(0, max(customer_count - len(customers), 0)):
+            customer = Customer(self.db)
+            customer.generate(icao)
+            customer.save()
 
     def animate_travel(self, waypoints):
         gfx = self.gfx
@@ -126,23 +145,7 @@ def customers_prepass(game):
 
 
 def menu_find_customers(game):
-    customers = game.db.customers_from_airport(game.airport)
-    # Make sure airport has at least N customers
-    cur_type = game.db.airport_type_icao(game.airport)
-    customer_count = 0
-    match cur_type:
-        case "small_airport":
-            customer_count = 0
-        case "medium_airport":
-            customer_count = 3
-        case "large_airport":
-            customer_count = 5
-
-    for i in range(0, max(customer_count - len(customers), 0)):
-        customer = Customer(game.db)
-        customer.generate(game.airport)
-        customer.save()
-    # Reload customers in case of changes
+    game.update_airport(game.airport)
     customers = game.db.customers_from_airport(game.airport)
     popup = Popup(game)
 
