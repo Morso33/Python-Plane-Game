@@ -26,10 +26,12 @@ class GameState:
     def __init__(self):
 
         # TODO Move these two to the database
-        self.money = 5000
+        self.money = 3_950_000
         self.airport = "EFHK"
 
         self.db = database.Database()
+        #Kill customers
+        self.db.kill_all_customers()
 
         # Curses initialization
         win = curses.initscr()
@@ -92,7 +94,7 @@ class GameState:
             return
 
         # Make sure airport has at least N customers
-        customers_tier1 = 0
+        customers_tier1 = 1 # Small airports always have one customer
         customers_tier2 = 0
         match airport_type:
             case "medium_airport":
@@ -101,6 +103,9 @@ class GameState:
             case "large_airport":
                 customers_tier1 = 2
                 customers_tier2 = 3
+
+        if (aircraft.get_aircraft_type(self.db.con, aircraft.selected_aircraft) == "Small"):
+            customers_tier2 = 0 # Small aircraft can't take large airport customers
 
         for i in range(0, customers_tier1):
             customer = Customer(self.db)
@@ -449,6 +454,8 @@ def main():
         popup = Popup(game)
         popup.add_text(f"At airport {game.airport}" )
         popup.add_text(f"Money: ${game.money}" )
+        popup.add_text(f"Selected aircraft: {aircraft.selected_aircraft}" )
+        popup.add_text(f"")
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")
         popup.add_option("View your customers")

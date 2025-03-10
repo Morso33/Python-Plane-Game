@@ -93,9 +93,10 @@ class Database():
         cur.execute("""
         INSERT INTO aircraft (id, name, category, capacity, speed_kmh, range_km, fuel_tank_l, fuel_consumption_lph, co2_emissions_kgph, price_million, owned) VALUES
         (1, 'Cessna 208 Caravan', 'Small', 9, 340, 1700, 1300, 220, 560, 3.00, 1),
-        (2, 'Learjet 75', 'Medium', 12, 860, 3700, 6000, 700, 1900, 5.25, 0),
-        (3, 'Boeing 747-8', 'Large', 400, 920, 14000, 240000, 12000, 30000, 250.00, 0),
-        (4, 'Boeing 747-8 VIP', 'Large', 50, 920, 14000, 240000, 12000, 30000, 250.00, 0);
+        (2, 'DHC-6 Twin Otter', 'Medium', 19, 330, 1500, 2000, 400, 1000, 5.00, 0),
+        (3, 'Learjet 75', 'Medium', 12, 860, 3700, 6000, 700, 1900, 5.25, 0),
+        (4, 'Boeing 747-8', 'Large', 400, 920, 14000, 240000, 12000, 30000, 250.00, 0),
+        (5, 'Boeing 747-8 VIP', 'Large', 50, 920, 14000, 240000, 12000, 30000, 250.00, 0);
         """)
 
         # THIS MUST BE THE LAST LINE OF THIS FUNCTION

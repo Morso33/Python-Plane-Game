@@ -32,7 +32,7 @@ class Customer:
             self.origin = origin_icao
             cur = self.db.con.cursor()
             query = f"SELECT ident FROM airport WHERE type IN ('small_airport', 'medium_airport') AND iso_country='FI' AND ident != ? ORDER BY RAND() LIMIT 1"
-            cur.execute(query, ("EFHK",))
+            cur.execute(query, (origin_icao,))
             result = cur.fetchone()
             #Calculate distance
             distance = self.db.icao_distance(origin_icao,result[0])
@@ -41,7 +41,7 @@ class Customer:
 
 
             self.destination = result[0]
-            self.reward = 1000 * random.randint(1, 5)
+            self.reward = aircraft.get_payout(distance, aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft()), aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft()))
             exitLoop = True
 
 
@@ -51,7 +51,7 @@ class Customer:
             self.origin = origin_icao
             cur = self.db.con.cursor()
             query = f"SELECT ident FROM airport WHERE type IN ('large_airport', 'medium_airport') AND ident != ? ORDER BY RAND() LIMIT 1"
-            cur.execute(query, ("EFHK",))
+            cur.execute(query, (origin_icao,))
             result = cur.fetchone()
 
             #Calculate distance
@@ -60,7 +60,7 @@ class Customer:
                 continue
 
             self.destination = result[0]
-            self.reward = 1000 * random.randint(1, 5)
+            self.reward = aircraft.get_payout(distance, aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft()), aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft()))
             exitLoop = True
 
     def accept(self):
