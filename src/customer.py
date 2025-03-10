@@ -28,27 +28,41 @@ class Customer:
 
 
     def generate_tier1(self, origin_icao):
-        self.origin = origin_icao
-        cur = self.db.con.cursor()
+        exitLoop = False
+        while not exitLoop:
+            self.origin = origin_icao
+            cur = self.db.con.cursor()
+            query = f"SELECT ident FROM airport WHERE type IN ('small_airport', 'medium_airport') AND iso_country='FI' AND ident != ? ORDER BY RAND() LIMIT 1"
+            cur.execute(query, ("EFHK",))
+            result = cur.fetchone()
+            #Calculate distance
+            distance = self.db.icao_distance(origin_icao,result[0])
+            if distance > 1000:
+                continue
 
-        country = self.db.airport_country_icao(origin_icao)
-        query = f"SELECT ident FROM airport WHERE type IN ('small_airport', 'medium_airport') AND iso_country = ? AND ident != ? ORDER BY RAND() LIMIT 1"
-        cur.execute(query, (country, "EFHK",))
-        result = cur.fetchone()
-        self.destination = result[0]
 
-        self.reward = 1000 * random.randint(1, 5)
+            self.destination = result[0]
+            self.reward = 1000 * random.randint(1, 5)
+            exitLoop = True
 
 
     def generate_tier2(self, origin_icao):
-        self.origin = origin_icao
-        cur = self.db.con.cursor()
-        query = f"SELECT ident FROM airport WHERE type IN ('large_airport', 'medium_airport') AND ident != ? ORDER BY RAND() LIMIT 1"
-        cur.execute(query, ("EFHK",))
-        result = cur.fetchone()
-        self.destination = result[0]
+        exitLoop = False
+        while not exitLoop:
+            self.origin = origin_icao
+            cur = self.db.con.cursor()
+            query = f"SELECT ident FROM airport WHERE type IN ('large_airport', 'medium_airport') AND ident != ? ORDER BY RAND() LIMIT 1"
+            cur.execute(query, ("EFHK",))
+            result = cur.fetchone()
 
-        self.reward = 1000 * random.randint(1, 5)
+            #Calculate distance
+            distance = self.db.icao_distance(origin_icao,result[0])
+            if distance > 1000:
+                continue
+
+            self.destination = result[0]
+            self.reward = 1000 * random.randint(1, 5)
+            exitLoop = True
 
     def accept(self):
         cur = self.db.con.cursor()
