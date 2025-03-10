@@ -5,7 +5,7 @@ from geopy.distance import geodesic
 from customer import Customer
 
 # Change this value to cause database to reset
-SCHEMA_VERSION = "5"
+SCHEMA_VERSION = "6"
 
 class Database():
     def __init__(self):
@@ -103,7 +103,7 @@ class Database():
         if coords == None:
             print("Virheellinen ICAO-koodi")
             exit()
-        return [coords[0],coords[1]]
+        return [coords[1],coords[0]]
 
     def airport_type_icao(self, key):
         cur = self.con.cursor()
