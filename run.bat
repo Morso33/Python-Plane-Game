@@ -1,2 +1,2 @@
-.\venv\Scripts\python.exe src/map.py
+.\venv\Scripts\python.exe src/main.py
 pause
