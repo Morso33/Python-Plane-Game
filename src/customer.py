@@ -30,8 +30,10 @@ class Customer:
     def generate_tier1(self, origin_icao):
         self.origin = origin_icao
         cur = self.db.con.cursor()
-        query = f"SELECT ident FROM airport WHERE type IN ('small_airport', 'medium_airport') AND iso_country='FI' AND ident != ? ORDER BY RAND() LIMIT 1"
-        cur.execute(query, ("EFHK",))
+
+        country = self.db.airport_country_icao(origin_icao)
+        query = f"SELECT ident FROM airport WHERE type IN ('small_airport', 'medium_airport') AND iso_country = ? AND ident != ? ORDER BY RAND() LIMIT 1"
+        cur.execute(query, (country, "EFHK",))
         result = cur.fetchone()
         self.destination = result[0]
 

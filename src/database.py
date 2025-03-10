@@ -115,6 +115,16 @@ class Database():
             exit()
         return data[0]
 
+    def airport_country_icao(self, key):
+        cur = self.con.cursor()
+        query = "SELECT iso_country FROM airport WHERE ident=%s"
+        cur.execute(query, (key,))
+        data = cur.fetchone()
+        if data == None:
+            print("Virheellinen ICAO-koodi")
+            exit()
+        return data[0]
+
     def airport_xy_icao(self, key):
         cur = self.con.cursor()
         query = "SELECT longitude_deg, latitude_deg FROM airport WHERE ident=%s"
