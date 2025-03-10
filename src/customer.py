@@ -27,17 +27,26 @@ class Customer:
 
 
 
-    # Assume cessna for now
-    def generate(self, origin_icao, aircraft_type="small"):
+    def generate_tier1(self, origin_icao):
         self.origin = origin_icao
         cur = self.db.con.cursor()
-        query = f"SELECT ident FROM airport WHERE type = 'small_airport' AND iso_country='FI' AND ident != ? ORDER BY RAND() LIMIT 1"
+        query = f"SELECT ident FROM airport WHERE type IN ('small_airport', 'medium_airport') AND iso_country='FI' AND ident != ? ORDER BY RAND() LIMIT 1"
         cur.execute(query, ("EFHK",))
         result = cur.fetchone()
         self.destination = result[0]
 
         self.reward = 1000 * random.randint(1, 5)
 
+
+    def generate_tier2(self, origin_icao):
+        self.origin = origin_icao
+        cur = self.db.con.cursor()
+        query = f"SELECT ident FROM airport WHERE type IN ('large_airport', 'medium_airport') AND ident != ? ORDER BY RAND() LIMIT 1"
+        cur.execute(query, ("EFHK",))
+        result = cur.fetchone()
+        self.destination = result[0]
+
+        self.reward = 1000 * random.randint(1, 5)
 
     def accept(self):
         cur = self.db.con.cursor()

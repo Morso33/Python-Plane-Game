@@ -80,19 +80,29 @@ class GameState:
         airport_type = self.db.airport_type_icao(icao)
 
         customers = self.db.customers_from_airport(icao)
-        # Make sure airport has at least N customers
-        customer_count = 0
-        match airport_type:
-            case "small_airport":
-                customer_count = 0
-            case "medium_airport":
-                customer_count = 3
-            case "large_airport":
-                customer_count = 5
 
-        for i in range(0, max(customer_count - len(customers), 0)):
+        if (len(customers) > 0):
+            return
+
+        # Make sure airport has at least N customers
+        customers_tier1 = 0
+        customers_tier2 = 0
+        match airport_type:
+            case "medium_airport":
+                customers_tier1 = 3
+                customers_tier2 = 0
+            case "large_airport":
+                customers_tier1 = 2
+                customers_tier2 = 3
+
+        for i in range(0, customers_tier1):
             customer = Customer(self.db)
-            customer.generate(icao)
+            customer.generate_tier1(icao)
+            customer.save()
+
+        for i in range(0, customers_tier2):
+            customer = Customer(self.db)
+            customer.generate_tier2(icao)
             customer.save()
 
     def animate_travel(self, waypoints):
