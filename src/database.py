@@ -66,6 +66,31 @@ class Database():
             ) DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
         """)
 
+        cur.execute("DROP TABLE IF EXISTS aircraft;")
+        cur.execute("""
+        CREATE TABLE aircraft (
+            id INT PRIMARY KEY,
+            name VARCHAR(50),
+            category VARCHAR(10),
+            capacity INT,
+            speed_kmh INT,
+            range_km INT,
+            fuel_tank_l INT,
+            fuel_consumption_lph INT,
+            co2_emissions_kgph INT,
+            price_million DECIMAL(10,2)
+        );""")
+
+        cur.execute("""
+        INSERT INTO aircraft (id, name, category, capacity, speed_kmh, range_km, fuel_tank_l, fuel_consumption_lph, co2_emissions_kgph, price_million) VALUES
+        (1, 'Cessna 208 Caravan', 'Small', 9, 340, 1700, 1300, 220, 560, 3.00),
+        (2, 'Learjet 75', 'Medium', 12, 860, 3700, 6000, 700, 1900, 5.25),
+        (3, 'Boeing 747-8', 'Large', 400, 920, 14000, 240000, 12000, 30000, 250.00),
+        (4, 'Boeing 747-8 VIP', 'Large', 50, 920, 14000, 240000, 12000, 30000, 250.00);
+        """)
+
+
+
 
         # THIS MUST BE THE LAST LINE OF THIS FUNCTION
         self.metadata_set("schema", SCHEMA_VERSION)

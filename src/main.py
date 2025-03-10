@@ -140,7 +140,7 @@ def menu_find_customers(game):
 
     for i in range(0, max(customer_count - len(customers), 0)):
         customer = Customer(game.db)
-        customer.generate(game.airport)
+        customer.generate(game.airport, "Cessna 208 Caravan")
         customer.save()
     # Reload customers in case of changes
     customers = game.db.customers_from_airport(game.airport)

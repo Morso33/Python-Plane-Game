@@ -1,5 +1,5 @@
 import random
-
+import aircraft
 # This sucks but will do for now (+ i dont care)
 
 class Customer:
@@ -26,17 +26,28 @@ class Customer:
         return f"{self.name:15} :: {self.origin:>8} -> {self.destination:8} :: ${self.reward} :: {'airport' if self.accepted==0 else 'boarded'}"
 
 
-
     # Assume cessna for now
-    def generate(self, origin_icao, aircraft_type="small"):
-        self.origin = origin_icao
-        cur = self.db.con.cursor()
-        query = f"SELECT ident FROM airport WHERE type = 'small_airport' AND iso_country='FI' AND ident != ? ORDER BY RAND() LIMIT 1"
-        cur.execute(query, ("EFHK",))
-        result = cur.fetchone()
-        self.destination = result[0]
+    def generate(self, origin_icao, aircraft_type):
+        exitLoop = False
 
-        self.reward = 1000 * random.randint(1, 5)
+        while not exitLoop:
+            max_range = aircraft.get_aircraft_range(self.db.con, aircraft_type)
+            self.origin = origin_icao
+            cur = self.db.con.cursor()
+            query = f"SELECT ident FROM airport WHERE type = 'small_airport' AND ident != ? ORDER BY RAND() LIMIT 1"
+            cur.execute(query, (self.origin,))
+
+            #Calculate distance
+            distance = self.db.icao_distance(self.origin, self.db.airport_yx_icao(cur.fetchone()[0]))
+
+            if (distance > max_range):
+                continue
+
+            result = cur.fetchone()
+            self.destination = result[0]
+
+            self.reward = 1000 * random.randint(1, 5)
+            exitLoop = True
 
 
     def accept(self):
@@ -45,8 +56,6 @@ class Customer:
         cur.execute(query, (self.id,))
 
         self.accepted = 1
-
-
 
 
     def save(self):
@@ -100,6 +109,3 @@ class Customer:
         self.reward      = result[4]
         self.deadline    = result[5]
         self.accepted    = result[6]
-
-
-
