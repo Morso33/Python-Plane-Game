@@ -196,7 +196,7 @@ def menu_find_customers(game):
                 airport_type = game.db.airport_type_icao(customer.destination)
             except Exception as e:
                 print(f"Error: Could not retrieve distance or airport type for {customer.destination}. {e}")
-                continue  # Skippaa tämän asiakkaan ja jatkaa seuraavaan
+                continue
 
             popup.add_text(f"{customer.origin} -> {customer.destination} ({airport_type})")
             popup.add_text(f"Distance: {int(distance)} km")
