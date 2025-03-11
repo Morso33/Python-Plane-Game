@@ -105,8 +105,14 @@ class Popup:
                 return self.cmd[sel]
             elif ch == ord("w") or ch == curses.KEY_UP:
                 sel -= 1
+                sel = max(0, min(sel, len(self.cmd)-1))
+                if self.cmd[sel] == "":
+                    sel -= 1
             elif ch == ord("s") or ch == curses.KEY_DOWN:
                 sel += 1
+                sel = max(0, min(sel, len(self.cmd)-1))
+                if self.cmd[sel] == "":
+                    sel += 1
 
             elif ch == ord("x"):
                 game.cam.zoom *= 2.0

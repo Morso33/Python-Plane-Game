@@ -651,30 +651,43 @@ def main():
         action = popup.run()
 
         if action == "Developer options":
-            action = impopup(game, [], [
-                "Freecam",
-                "Reset",
-                "Quest flags",
-                "Fly to KJFK",
-                "+ $10,000,000",
-                "Become opiskelija",
-                "Return"])
-            if action == "Reset":
-                game.db.reset()
-                game.load()
-                impopup(game, ["Database reset"], ["Ok"])
-            elif action == "Freecam":
-                freecam(game)
-            elif action == "Fly to KJFK":
-                game.fly_to("KJFK")
-            elif action == "Quest flags":
-                impopup(game, game.quests.all_flags(), ["Return"])
-            elif action == "Become opiskelija":
-                game.money = 0
+            while True:
+                action = impopup(game, [], [
+                    "Freecam",
+                    "Reset",
+                    "Quest flags",
+                    "+ $10,000,000",
+                    "+ $100,000,000",
+                    "Become opiskelija",
+                    "Fly to New York",
+                    "",
+                    "Return"])
+                if action == "Reset":
+                    game.db.reset()
+                    game.load()
+                    impopup(game, ["Database reset"], ["Ok"])
+                    break
+                elif action == "Freecam":
+                    freecam(game)
+                elif action == "Fly to New York":
+                    game.fly_to("KJFK")
+                    break
+                elif action == "Quest flags":
+                    impopup(game, game.quests.all_flags(), ["Return"])
+                elif action == "Become opiskelija":
+                    game.money = 0
+                    impopup(game, ["You are now broke."])
+                    break
 
-            elif action == "+ $10,000,000":
-                game.money += 10_000_000
-                impopup(game, ["$10 million added"], ["Ok"])
+                elif action == "+ $10,000,000":
+                    game.money += 10_000_000
+                    impopup(game, ["$10 million added"], ["Ok"])
+
+                elif action == "+ $100,000,000":
+                    game.money += 100_000_000
+                    impopup(game, ["$100 million added"], ["Ok"])
+                else:
+                    break
 
 
         elif action == "Look for customers":
