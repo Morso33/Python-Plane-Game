@@ -29,6 +29,7 @@ class GameState:
         # TODO Move these two to the database
         self.money = 3_950_000
         self.airport = "EFHK"
+        self.co2_emitted = 0
 
         self.db = database.Database()
         #Kill customers
@@ -112,6 +113,7 @@ class GameState:
         self.animate_travel(wp)
 
         self.airport = target
+        self.co2_emitted += co2_emissions
         customers = self.db.customers_from_airport(icao)
 
         self.quests.arrived_at_airport()
@@ -511,7 +513,7 @@ def main():
         popup.add_text(f"{airport.municipality} ({airport.continent} {airport.iso_region})" )
         popup.add_text(f"" )
         popup.add_text(f"Money:              ${game.money}" )
-        popup.add_text(f"CO2 emissions:      0 grams" )
+        popup.add_text(f"CO2 emissions:      {game.co2_emitted} kg" )
         popup.add_text(f"" )
         popup.add_text(f"Aircraft:           {aircraft.selected_aircraft}" )
         popup.add_text(f"Aircraft class:     I" )
