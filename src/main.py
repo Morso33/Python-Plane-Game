@@ -191,33 +191,56 @@ def customers_prepass(game):
 
 
 def menu_find_customers(game):
-    game.update_airport(game.airport)
-    customers = game.db.customers_from_airport(game.airport)
-    popup = Popup(game)
+    try:
+        if not game.airport:
+            print("Error: No airport selected.")
+            return
 
-    i = 0
-    for customer in customers:
-        i+=1
-        if (customer.accepted):
-            continue
-        popup.add_text(f"#{i}: {customer.name}")
-        distance = game.db.icao_distance(customer.origin, customer.destination)
-        popup.add_text(f"{customer.origin} -> {customer.destination} ({game.db.airport_type_icao(customer.destination)})")
+        game.update_airport(game.airport)
 
-        popup.add_text(f"Distance: {int(distance)} km")
-        popup.add_text(f"Reward:   $ {customer.reward}")
-        popup.add_text(f"")
-        popup.add_option(f"Board customer #{i}", i)
+        customers = game.db.customers_from_airport(game.airport)
+        if customers is None:
+            print(f"Error: Failed to retrieve customers from {game.airport}.")
+            return
 
-    popup.add_option(f"Return")
-    popup.offscreen = True
+        if not customers:
+            print(f"No customers found at {game.airport}.")
+            return
 
-    popup.postpass = customers_postpass
-    popup.prepass = customers_prepass
-    action = popup.run()
+        popup = Popup(game)
+        i = 0
+        for customer in customers:
+            i += 1
+            if customer.accepted:
+                continue
 
-    if action == "Return":
-        return
+            popup.add_text(f"#{i}: {customer.name}")
+
+            try:
+                distance = game.db.icao_distance(customer.origin, customer.destination)
+                airport_type = game.db.airport_type_icao(customer.destination)
+            except Exception as e:
+                print(f"Error: Could not retrieve distance or airport type for {customer.destination}. {e}")
+                continue
+
+            popup.add_text(f"{customer.origin} -> {customer.destination} ({airport_type})")
+            popup.add_text(f"Distance: {int(distance)} km")
+            popup.add_text(f"Reward:   $ {customer.reward}")
+            popup.add_text(f"")
+
+            popup.add_option(f"Board customer #{i}", i)
+
+        popup.add_option(f"Return")
+        popup.offscreen = True
+        popup.postpass = customers_postpass
+        popup.prepass = customers_prepass
+        action = popup.run()
+
+        if action == "Return":
+            return
+    except Exception as e:
+        print(f"Unexpected error in menu_find_customers: {e}")
+
 
     customers[action-1].accept()
 
