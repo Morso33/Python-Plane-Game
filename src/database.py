@@ -27,9 +27,6 @@ class Database():
         except:
             self.reset()
 
-        # Reset anyway for now
-        self.reset()
-
 
      # Write the database schema here !!!
     def reset(self):

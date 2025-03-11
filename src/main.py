@@ -495,9 +495,20 @@ def choose_airport_from_map(game):
             cam.zoom *= 0.5
 
 
+def menu_game_start(game):
+    popup = Popup(game)
+    #game.db.reset()
+    if game.quests.has_flag("game_start"):
+        popup.add_option("Continue")
+
+    popup.add_option("New Game")
+    ret = popup.run()
+
 
 def main():
     game = GameState()
+
+    menu_game_start(game)
 
     while True:
         game.cam.gps = game.db.airport_xy_icao(game.airport)

@@ -9,7 +9,6 @@ class QuestManager:
         self.db = game.db
 
 
-
     def add_flag(self, flag):
         cur = self.db.con.cursor()
         cur.execute("REPLACE INTO quest (flag) VALUES (?)", (flag,))
@@ -32,9 +31,9 @@ class QuestManager:
         return ret
 
     def update(self):
-        if not self.has_flag("quests_init"):
+        if not self.has_flag("game_start"):
             flags = [
-                "quests_init",
+                "game_start",
                 "test_del",
                 "je_new_york"
             ]
