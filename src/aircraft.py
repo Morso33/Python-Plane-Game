@@ -1,8 +1,5 @@
 import random
 
-selected_aircraft = "Cessna 208 Caravan"
-
-
 class Aircraft:
     def __init__(self, game, aircraft_id=None):
         self.game        = game
