@@ -636,9 +636,11 @@ def main():
             do_default = game.quests.completed_customer_flight(customer)
             if do_default:
                 popup = Popup(game)
+                popup.w = 60
                 popup.add_text(f"You have completed {customer.name}'s flight.\n")
                 popup.add_text(f"+ ${customer.reward}")
                 popup.add_text(f"+ {customer.reward_rp} rp")
+                popup.run()
                 game.money += customer.reward
                 game.rp    += customer.reward_rp
                 customer.drop()
@@ -652,7 +654,7 @@ def main():
         popup.add_text(f"{airport.type_pretty} airport" )
         popup.add_text(f"" )
         popup.add_text(f"Money:              ${game.money}" )
-        popup.add_text(f"CO2 emissions:      {game.co2:0.1f} kg" )
+        popup.add_text(f"CO² emissions:      {game.co2:0.0f} kg" )
         popup.add_text(f"Reputation:         {game.rp} rp" )
         popup.add_text(f"" )
         popup.add_text(f"Aircraft:           {aircraft.name}" )
