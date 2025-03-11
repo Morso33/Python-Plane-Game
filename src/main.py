@@ -10,7 +10,6 @@ from quest import QuestManager
 from geopy.distance import great_circle
 from geopy.distance import geodesic
 
-#import aircraft
 from aircraft import Aircraft
 
 # Engine loop architecture
@@ -252,6 +251,8 @@ def menu_find_customers(game):
         print(f"No customers found at {game.airport}.")
         return
 
+    aircraft = Aircraft(game)
+
     popup = Popup(game)
     i = 0
     for customer in customers:
@@ -259,18 +260,22 @@ def menu_find_customers(game):
         if customer.accepted:
             continue
 
-        popup.add_text(f"#{i}: {customer.name}")
 
-        try:
-            distance = game.db.icao_distance(customer.origin, customer.destination)
-            airport_type = game.db.airport_type_icao(customer.destination)
-        except Exception as e:
-            print(f"Error: Could not retrieve distance or airport type for {customer.destination}. {e}")
-            continue
+        distance     = game.db.icao_distance(customer.origin, customer.destination)
 
-        popup.add_text(f"{customer.origin} -> {customer.destination} ({airport_type})")
-        popup.add_text(f"Distance: {int(distance)} km")
-        popup.add_text(f"Reward:   $ {customer.reward}")
+        airport = game.db.get_airport(customer.destination)
+
+        time = distance / aircraft.speed
+        liters = aircraft.fuel_lph * time
+
+        popup.add_text(f"#{i}: {customer.origin}: {customer.name}")
+
+
+        #popup.add_text(f"{customer.origin} -> {customer.destination} ({airport_type})")
+        popup.add_text(f"{airport.name}")
+        popup.add_text(f"{airport.type_pretty} airport")
+        popup.add_text(f"{int(distance)} km {time:.1f} h {liters:.1f} l")
+        popup.add_text(f"+ ${customer.reward} {customer.reward_rp}rp")
         popup.add_text(f"")
 
         popup.add_option(f"Board customer #{i}", i)
@@ -563,20 +568,22 @@ def main():
         airport = game.db.get_airport(game.airport)
         popup.add_text(f"At airport {airport.ident} - {airport.name}" )
         popup.add_text(f"{airport.municipality} ({airport.continent} {airport.iso_region})" )
+        popup.add_text(f"{airport.type_pretty} airport" )
         popup.add_text(f"" )
         popup.add_text(f"Money:              ${game.money}" )
-        popup.add_text(f"CO2 emissions:      {game.co2:.1f} kg" )
+        popup.add_text(f"CO2 emissions:      {game.co2:0.1f} kg" )
         popup.add_text(f"Reputation:         {game.rp} rp" )
         popup.add_text(f"" )
         popup.add_text(f"Aircraft:           {aircraft.name}" )
-        popup.add_text(f"Fuel:               {aircraft.fuel} / {aircraft.fuel_max} liters" )
-        popup.add_text(f"Range:              {aircraft.range:.1f} km" )
+        popup.add_text(f"Fuel:               {aircraft.fuel:0.1f} / {aircraft.fuel_max:0.1f} liters" )
+        popup.add_text(f"Range:              {aircraft.range:0.1f} km" )
         popup.add_text(f"Comfort class:      I" )
         popup.add_text(f"")
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")
         popup.add_option("View your customers")
-        popup.add_option("Hangar")
+        if airport.ident == "EFHK":
+            popup.add_option("Hangar")
         popup.add_option("")
         popup.add_option("Developer options")
         popup.add_option("Quit game")
@@ -588,7 +595,7 @@ def main():
                 "Reset",
                 "Fly to KJFK",
                 "Quest flags",
-                "Force money",
+                "+ $10,000,000",
                 "Return"])
             if action == "Reset":
                 game.db.reset()
@@ -600,10 +607,10 @@ def main():
             elif action == "Quest flags":
                 impopup(game, game.quests.all_flags(), ["Return"])
 
-            elif action == "Force money":
-                game.money = 10_000_000
-                impopup(game, ["Money set to 10 million"], ["Ok"])
-                
+            elif action == "+ $10 000 000":
+                game.money += 10_000_000
+                impopup(game, ["$10 million added"], ["Ok"])
+
 
         elif action == "Look for customers":
             menu_find_customers(game)
@@ -613,8 +620,6 @@ def main():
 
         elif action == "Hangar":
             menu_hangar(game)
-            
-            
 
 
 

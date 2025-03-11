@@ -1,5 +1,4 @@
 import random
-import aircraft
 
 class Customer:
     def __init__(self, db):
@@ -38,10 +37,9 @@ class Customer:
         distance = self.db.icao_distance(origin_icao,result[0])
 
         #Splitted this monstrosity
-        fuel_burn = aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft())
-        selected_aircraft = aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft())
-        self.reward = aircraft.get_payout(distance, fuel_burn, selected_aircraft)
 
+        rate = 4.0 # Price per KM
+        self.reward = round(distance * rate)
         self.reward_rp = 1
 
 
@@ -55,10 +53,9 @@ class Customer:
 
         distance = self.db.icao_distance(origin_icao,result[0])
 
-        #Splitted this monstrosity
-        fuel_burn = aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft())
-        selected_aircraft = aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft())
-        self.reward = aircraft.get_payout(distance, fuel_burn, selected_aircraft)
+
+        rate = 4.0 # Price per KM
+        self.reward = round(distance * rate)
 
         self.reward_rp = 5
 
