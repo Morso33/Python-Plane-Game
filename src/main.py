@@ -484,7 +484,7 @@ def main():
 
     while True:
         game.cam.gps = game.db.airport_xy_icao(game.airport)
-
+        game.quests.update()
         customers_on_board   = game.db.accepted_customers()
         for customer in customers_on_board:
             if game.airport != customer.destination:

@@ -43,6 +43,14 @@ class QuestManager:
                 self.add_flag(flag)
             self.del_flag("test_del")
 
+            self.tutorial_quest()
+
+    def tutorial_quest(self):
+        popup = Popup(self.game)
+        popup.add_text("Welcome! This is a placeholder for tutorial quest.")
+        popup.add_option("Continue")
+        popup.run()
+
     def arrived_at_airport(self):
         self.update()
         icao = self.game.airport
@@ -59,6 +67,7 @@ class QuestManager:
             customer.save()
 
     def completed_customer_flight(self, customer):
+        self.update()
         if customer.name == "Jeffrey Epstein":
             popup = Popup(self.game)
             popup.w = 50
