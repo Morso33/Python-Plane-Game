@@ -657,7 +657,7 @@ def main():
                 "Quest flags",
                 "Fly to KJFK",
                 "+ $10,000,000",
-                "Become broke",
+                "Become opiskelija",
                 "Return"])
             if action == "Reset":
                 game.db.reset()
@@ -669,7 +669,7 @@ def main():
                 game.fly_to("KJFK")
             elif action == "Quest flags":
                 impopup(game, game.quests.all_flags(), ["Return"])
-            elif action == "Become broke":
+            elif action == "Become opiskelija":
                 game.money = 0
 
             elif action == "+ $10,000,000":
