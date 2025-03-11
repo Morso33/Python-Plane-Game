@@ -332,7 +332,7 @@ def menu_find_customers(game):
         return
 
     if not customers:
-        print(f"No customers found at {game.airport}.")
+        impopup(game, ["There are no customers on this airport."])
         return
 
     aircraft = Aircraft(game)
