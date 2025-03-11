@@ -58,3 +58,27 @@ def get_payout(distance, aircraft_fuel_burn_per_km, aircraft_type):
     random_factor = random.uniform(0.6, 1.6)
     rounded = round(payout * random_factor, -2)
     return int(rounded)
+
+def calculate_flight_time(distance, aircraft_speed):
+    time = distance / aircraft_speed
+    time = round(time, 2)
+    return time
+
+def get_aircraft_speed(con, aircraft):
+    cur = con.cursor()
+    query = "SELECT speed_kmh FROM aircraft WHERE name = ?"
+    cur.execute(query, (aircraft,))
+    result = cur.fetchone()
+    return result[0]
+
+def get_aircraft_co2_emissions(con, aircraft):
+    cur = con.cursor()
+    query = "SELECT co2_emissions_kgph FROM aircraft WHERE name = ?"
+    cur.execute(query, (aircraft,))
+    result = cur.fetchone()
+    return result[0]
+
+def calculate_co2_emissions(flight_time_h, aircraft_co2_emissions_per_h):
+    emissions = flight_time_h * aircraft_co2_emissions_per_h
+    emissions = round(emissions, 2)
+    return emissions
