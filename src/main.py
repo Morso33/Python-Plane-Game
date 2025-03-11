@@ -493,6 +493,10 @@ def main():
     while True:
         game.cam.gps = game.db.airport_xy_icao(game.airport)
         game.quests.update()
+
+        current_aircraft = aircraft.get_selected_aircraft()
+        fuel  = aircraft.get_aircraft_fuel(game.db.con, current_aircraft)
+
         customers_on_board   = game.db.accepted_customers()
         for customer in customers_on_board:
             if game.airport != customer.destination:
@@ -517,7 +521,7 @@ def main():
         popup.add_text(f"" )
         popup.add_text(f"Aircraft:           {aircraft.selected_aircraft}" )
         popup.add_text(f"Aircraft class:     I" )
-        popup.add_text(f"Fuel:               0 kg" )
+        popup.add_text(f"Fuel:               {fuel[0]} / {fuel[1]} l" )
         popup.add_text(f"Flight range:       0 km" )
         popup.add_text(f"")
         popup.add_option("Look for customers")

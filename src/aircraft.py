@@ -12,6 +12,13 @@ def get_aircraft_range(con, aircraft):
     result = cur.fetchone()
     return result[0]
 
+def get_aircraft_fuel(con, aircraft):
+    cur = con.cursor()
+    query = "SELECT fuel, fuel_max FROM aircraft WHERE name = ?"
+    cur.execute(query, (aircraft,))
+    result = cur.fetchone()
+    return result
+
 def is_aircraft_owned(con, aircraft):
     cur = con.cursor()
     query = "SELECT owned FROM aircraft WHERE name = ?"
