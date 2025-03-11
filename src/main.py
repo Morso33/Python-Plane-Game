@@ -75,9 +75,11 @@ class GameState:
         current_aircraft = aircraft.get_selected_aircraft()
 
         distance = self.db.icao_distance(self.airport, target)
-        
-        aircraft_flight_time = aircraft.calculate_flight_time(distance, aircraft.get_aircraft_speed(self.db.con, current_aircraft))
+
+        aircraft_speed = aircraft.get_aircraft_speed(self.db.con, current_aircraft)
+        aircraft_flight_time = aircraft.calculate_flight_time(distance, aircraft_speed)
         aircraft_emissions_per_h = aircraft.get_aircraft_co2_emissions(self.db.con, current_aircraft)
+        co2_emissions = aircraft.calculate_co2_emissions(aircraft_flight_time, aircraft_emissions_per_h)
 
         popup = Popup(self)
         popup.w = 60
@@ -89,7 +91,7 @@ class GameState:
         popup.add_text(f"Fuel required:   0 kg (0%)")
         popup.add_text(f"Flight distance: {distance:.1f} km")
         popup.add_text(f"Flight time:     {aircraft_flight_time} hours")
-        popup.add_text(f"CO2 emitted:     {aircraft.calculate_co2_emissions(aircraft_flight_time, aircraft_emissions_per_h)} kg")
+        popup.add_text(f"CO2 emitted:     {co2_emissions} kg")
         popup.add_text(f"")
         popup.add_text(f"Airport type:    {airport.type_pretty}")
         popup.add_text(f"")
