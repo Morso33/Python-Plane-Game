@@ -10,7 +10,8 @@ from quest import QuestManager
 from geopy.distance import great_circle
 from geopy.distance import geodesic
 
-import aircraft
+#import aircraft
+from aircraft import Aircraft
 
 # Engine loop architecture
 #
@@ -107,19 +108,14 @@ class GameState:
             return
 
         airport = self.db.get_airport(icao)
-        current_aircraft = aircraft.get_selected_aircraft()
-
         distance = self.db.icao_distance(self.airport, target)
 
-        aircraft_speed = aircraft.get_aircraft_speed(self.db.con, current_aircraft)
-        aircraft_flight_time = aircraft.calculate_flight_time(distance, aircraft_speed)
-        aircraft_emissions_per_h = aircraft.get_aircraft_co2_emissions(self.db.con, current_aircraft)
-        co2_emissions = aircraft.calculate_co2_emissions(aircraft_flight_time, aircraft_emissions_per_h)
+        aircraft = Aircraft(self)
 
-        fuel_burn = 0
-        fuel_burn = aircraft.get_fuel_burn_per_km(self.db.con, current_aircraft) * aircraft_flight_time
+        time = distance / aircraft.speed
+        co2  = aircraft.co2_kgph * time
+        fuel = aircraft.fuel_lph * time
 
-        fuel = aircraft.get_aircraft_fuel(self.db.con, current_aircraft)
 
         popup = Popup(self)
         popup.w = 60
@@ -128,11 +124,11 @@ class GameState:
         popup.add_text(f"{airport.municipality}, {airport.iso_region}, {airport.continent}")
         popup.add_text(f"")
         popup.add_text(f"Fees:            0 $")
-        popup.add_text(f"Fuel required:   {fuel_burn:.1f} l (0%)")
-        popup.add_text(f"Current fuel:    {fuel[0]:.1f} l (0%)")
+        popup.add_text(f"Fuel required:   {fuel:.1f} l (0%)")
+        popup.add_text(f"Current fuel:    {aircraft.fuel:.1f} l (0%)")
         popup.add_text(f"Flight distance: {distance:.1f} km")
-        popup.add_text(f"Flight time:     {aircraft_flight_time} hours")
-        popup.add_text(f"CO2 emitted:     {co2_emissions} kg")
+        popup.add_text(f"Flight time:     {time:.1f} hours")
+        popup.add_text(f"CO2 emitted:     {co2:.1f} kg")
         popup.add_text(f"")
         popup.add_text(f"Airport type:    {airport.type_pretty}")
         popup.add_text(f"")
@@ -153,11 +149,10 @@ class GameState:
         self.animate_travel(wp)
 
         self.airport = target
-        self.co2 += co2_emissions
+        self.co2 += co2
         customers = self.db.customers_from_airport(icao)
 
-
-        aircraft.set_aircraft_fuel(self.db.con, current_aircraft, fuel[0] - fuel_burn)
+        aircraft.set_fuel(aircraft.fuel - fuel)
 
         self.quests.arrived_at_airport()
 
@@ -242,56 +237,52 @@ def customers_prepass(game):
 
 
 def menu_find_customers(game):
-    try:
-        if not game.airport:
-            print("Error: No airport selected.")
-            return
+    if not game.airport:
+        print("Error: No airport selected.")
+        return
 
-        game.update_airport(game.airport)
+    game.update_airport(game.airport)
 
-        customers = game.db.customers_from_airport(game.airport)
-        if customers is None:
-            print(f"Error: Failed to retrieve customers from {game.airport}.")
-            return
+    customers = game.db.customers_from_airport(game.airport)
+    if customers is None:
+        print(f"Error: Failed to retrieve customers from {game.airport}.")
+        return
 
-        if not customers:
-            print(f"No customers found at {game.airport}.")
-            return
+    if not customers:
+        print(f"No customers found at {game.airport}.")
+        return
 
-        popup = Popup(game)
-        i = 0
-        for customer in customers:
-            i += 1
-            if customer.accepted:
-                continue
+    popup = Popup(game)
+    i = 0
+    for customer in customers:
+        i += 1
+        if customer.accepted:
+            continue
 
-            popup.add_text(f"#{i}: {customer.name}")
+        popup.add_text(f"#{i}: {customer.name}")
 
-            try:
-                distance = game.db.icao_distance(customer.origin, customer.destination)
-                airport_type = game.db.airport_type_icao(customer.destination)
-            except Exception as e:
-                print(f"Error: Could not retrieve distance or airport type for {customer.destination}. {e}")
-                continue
+        try:
+            distance = game.db.icao_distance(customer.origin, customer.destination)
+            airport_type = game.db.airport_type_icao(customer.destination)
+        except Exception as e:
+            print(f"Error: Could not retrieve distance or airport type for {customer.destination}. {e}")
+            continue
 
-            popup.add_text(f"{customer.origin} -> {customer.destination} ({airport_type})")
-            popup.add_text(f"Distance: {int(distance)} km")
-            popup.add_text(f"Reward:   $ {customer.reward}")
-            popup.add_text(f"")
+        popup.add_text(f"{customer.origin} -> {customer.destination} ({airport_type})")
+        popup.add_text(f"Distance: {int(distance)} km")
+        popup.add_text(f"Reward:   $ {customer.reward}")
+        popup.add_text(f"")
 
-            popup.add_option(f"Board customer #{i}", i)
+        popup.add_option(f"Board customer #{i}", i)
 
-        popup.add_option(f"Return")
-        popup.offscreen = True
-        popup.postpass = customers_postpass
-        popup.prepass = customers_prepass
-        action = popup.run()
+    popup.add_option(f"Return")
+    popup.offscreen = True
+    popup.postpass = customers_postpass
+    popup.prepass = customers_prepass
+    action = popup.run()
 
-        if action == "Return":
-            return
-    except Exception as e:
-        print(f"Unexpected error in menu_find_customers: {e}")
-
+    if action == "Return":
+        return
 
     customers[action-1].accept()
 
@@ -322,45 +313,40 @@ def menu_fly(game):
 
 
 def menu_hangar(game):
-    all_aircraft = game.db.get_all_aircraft()
     popup = Popup(game)
     popup.add_text("Hangar")
-    popup.add_text(f"Selected aircraft: {aircraft.selected_aircraft}")
-    i = 0
-    for ac in all_aircraft:
-        i+=1
-        #Get aircraft name
-        popup.add_option(f"#{i}: {ac[1]}" + (" [Owned]" if ac[10] else ""), ac[0])
-    popup.add_option("Return")
-    target = popup.run()
 
-    if target == "Return":
-        return
-    
-    if not all_aircraft[int(target)-1][10]:
-        popup = Popup(game)
-        popup.add_text(f"Purchase {all_aircraft[target-1][1]} for ${all_aircraft[target-1][9]} million?")
-        popup.add_option("Yes")
-        popup.add_option("No")
-        action = popup.run()
-        if action == "Yes":
+    for ac in game.db.get_all_aircraft():
+        aircraft = Aircraft(game, ac[0])
 
-            if game.money < all_aircraft[target-1][9] * 1_000_000:
-                impopup(game, ["Not enough money"], ["OK"])
+        label = f"{aircraft.name:<19} | "
+        price = f"${aircraft.price} Mil"
+
+        if aircraft.owned == True:
+            price = "Owned"
+        if aircraft.selected == True:
+            price = "Selected"
+        label += f"{price:>10}"
+
+        popup.add_option( label, ac[0])
+
+    popup.add_option("", -1)
+    popup.add_option("Return", -1)
+
+    ret = popup.run()
+
+    if ret != -1:
+        aircraft = Aircraft(game, ret)
+
+        if aircraft.owned == False:
+            if game.money < aircraft.price * 1000000:
+                impopup(game, ["Not enough money"], ["Ok"])
             else:
-                aircraft.purchase_aircraft(game.db.con, all_aircraft[target-1][1])
-                impopup(game, [f"{all_aircraft[target-1][1]} purchased"], ["OK"])
-    else:
-        popup = Popup(game)
-        popup.add_text("Select aircraft?")
-        popup.add_option("Yes")
-        popup.add_option("No")
-        action = popup.run()
-        if action == "Yes":
-            aircraft.selected_aircraft = all_aircraft[target-1][1]
-            impopup(game, [f"{all_aircraft[target-1][1]} selected"], ["OK"])
-            #Kill all customers
-            game.db.kill_all_customers()
+                aircraft.purchase()
+                impopup(game, [f"{aircraft.name} purchased"], ["Ok"])
+
+        if aircraft.owned == True:
+            game.aircraft_id = ret
 
 
 
@@ -545,12 +531,13 @@ def main():
 
     menu_game_start(game)
 
+    game.load()
+
     while True:
         game.cam.gps = game.db.airport_xy_icao(game.airport)
         game.quests.update()
 
-        current_aircraft = aircraft.get_selected_aircraft()
-        fuel  = aircraft.get_aircraft_fuel(game.db.con, current_aircraft)
+        aircraft = Aircraft(game)
 
         customers_on_board   = game.db.accepted_customers()
         for customer in customers_on_board:
@@ -559,10 +546,15 @@ def main():
             do_default = game.quests.completed_customer_flight(customer)
             if do_default:
                 impopup(game,
-                    [f"You have completed {customer.name}'s flight, and were rewarded ${customer.reward}"],
+                    [f"You have completed {customer.name}'s flight.",
+                    f"",
+                    f"+ ${customer.reward}",
+                    f"+ {customer.reward_rp} rp",
+                    ],
                     ["Ok"]
                 )
                 game.money += customer.reward
+                game.rp    += customer.reward_rp
                 customer.drop()
 
         game.save()
@@ -573,12 +565,13 @@ def main():
         popup.add_text(f"{airport.municipality} ({airport.continent} {airport.iso_region})" )
         popup.add_text(f"" )
         popup.add_text(f"Money:              ${game.money}" )
-        popup.add_text(f"CO2 emissions:      {game.co2} kg" )
+        popup.add_text(f"CO2 emissions:      {game.co2:.1f} kg" )
+        popup.add_text(f"Reputation:         {game.rp} rp" )
         popup.add_text(f"" )
-        popup.add_text(f"Aircraft:           {aircraft.selected_aircraft}" )
-        popup.add_text(f"Aircraft class:     I" )
-        popup.add_text(f"Fuel:               {fuel[0]} / {fuel[1]} l" )
-        popup.add_text(f"Flight range:       0 km" )
+        popup.add_text(f"Aircraft:           {aircraft.name}" )
+        popup.add_text(f"Fuel:               {aircraft.fuel} / {aircraft.fuel_max} liters" )
+        popup.add_text(f"Range:              {aircraft.range:.1f} km" )
+        popup.add_text(f"Comfort class:      I" )
         popup.add_text(f"")
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")

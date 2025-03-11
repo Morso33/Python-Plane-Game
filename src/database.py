@@ -61,6 +61,7 @@ class Database():
 
                 deadline    int     NOT NULL,
                 reward      int     NOT NULL,
+                reward_rp   int     NOT NULL,
                 accepted    int     NOT NULL,
 
                 PRIMARY KEY (id),
@@ -92,18 +93,18 @@ class Database():
             fuel_max FLOAT,
             fuel_consumption_lph INT,
             co2_emissions_kgph INT,
-            price_million DECIMAL(10,2),
+            price INT,
             owned INT DEFAULT 0
         );""")
 
         cur.execute("""
-        INSERT INTO aircraft (id, name, category, capacity, speed_kmh, range_km, fuel, fuel_max, fuel_consumption_lph, co2_emissions_kgph, price_million, owned) VALUES
-        (1, 'Cessna 208 Caravan', 'Small',  9,   340, 1700,  1300,   1300,   220,   560,   3.00,   1),
-        (2, 'DHC-6 Twin Otter',   'Medium', 19,  330, 1500,  2000,   2000,   400,   1000,  5.00,   0),
-        (3, 'Learjet 75',         'Medium', 12,  860, 3700,  6000,   6000,   700,   1900,  5.25,   0),
-        (4, 'Boeing 747-8',       'Large',  400, 920, 14000, 240000, 240000, 12000, 30000, 250.00, 0),
-        (5, 'Boeing 747-8 VIP',   'Large',  50,  920, 14000, 240000, 240000, 12000, 30000, 250.00, 0);
+        INSERT INTO aircraft (id, name, category, capacity, speed_kmh, range_km, fuel, fuel_max, fuel_consumption_lph, co2_emissions_kgph, price, owned) VALUES
+        (1, 'Cessna 208 Caravan', 'Small',  9,   340, 1700,  1300,   1300,   220,   560,     3,   1),
+        (2, 'Learjet 75',         'Medium', 12,  860, 3700,  6000,   6000,   700,   1900,    5,   0),
+        (3, 'Boeing 747-8',       'Large',  400, 920, 14000, 240000, 240000, 12000, 30000, 250, 0)
         """)
+        # (5, 'Boeing 747-8 VIP',   'Large',  50,  920, 14000, 240000, 240000, 12000, 30000, 250000000, 0, 0);
+        #(2, 'DHC-6 Twin Otter',   'Medium', 19,  330, 1500,  2000,   2000,   400,   1000,    5000000,   0),
 
         cur.execute("DROP TABLE IF EXISTS game;")
         cur.execute("""
@@ -310,7 +311,7 @@ class Database():
             customers.append(c)
 
         return customers
-    
+
     def get_all_aircraft(self):
         cur = self.con.cursor()
         query = "SELECT * FROM aircraft ORDER BY id"
@@ -318,6 +319,12 @@ class Database():
         result = cur.fetchall()
         return result
 
+    def get_aircraft_count(self):
+        cur = self.con.cursor()
+        query = "SELECT count(*) FROM aircraft"
+        cur.execute(query)
+        result = cur.fetchall()
+        return result[0]
 
     def kill_all_customers(self):
         cur = self.con.cursor()

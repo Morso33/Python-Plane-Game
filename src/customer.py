@@ -5,11 +5,11 @@ class Customer:
     def __init__(self, db):
         self.name = f"Customer{random.randint(1000, 9999)}"
         self.db = db
-
         self.id = 0
 
         self.deadline = 0
         self.reward   = 0
+        self.reward_rp = 0
         self.accepted = 0
 
     def print(self):
@@ -42,6 +42,8 @@ class Customer:
         selected_aircraft = aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft())
         self.reward = aircraft.get_payout(distance, fuel_burn, selected_aircraft)
 
+        self.reward_rp = 1
+
 
     def generate_tier2(self, origin_icao):
         self.origin = origin_icao
@@ -57,6 +59,8 @@ class Customer:
         fuel_burn = aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft())
         selected_aircraft = aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft())
         self.reward = aircraft.get_payout(distance, fuel_burn, selected_aircraft)
+
+        self.reward_rp = 5
 
 
     def accept(self):
@@ -75,9 +79,10 @@ class Customer:
                 origin,
                 destination,
                 reward,
+                reward_rp,
                 deadline,
                 accepted
-            ) VALUES (?,?,?,?,?,?);
+            ) VALUES (?,?,?,?,?,?,?);
         """
         cur.execute(query,
             (
@@ -85,6 +90,7 @@ class Customer:
                 self.origin,
                 self.destination,
                 self.reward,
+                self.reward_rp,
                 self.deadline,
                 self.accepted
             )
@@ -104,6 +110,7 @@ class Customer:
                 origin,
                 destination,
                 reward,
+                reward_rp,
                 deadline,
                 accepted
             FROM customer WHERE id = ?;
@@ -116,5 +123,6 @@ class Customer:
         self.origin      = result[2]
         self.destination = result[3]
         self.reward      = result[4]
-        self.deadline    = result[5]
-        self.accepted    = result[6]
+        self.reward_rp   = result[5]
+        self.deadline    = result[6]
+        self.accepted    = result[7]
