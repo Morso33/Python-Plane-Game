@@ -2,6 +2,7 @@
 
 from customer import Customer
 from popup import Popup, impopup
+from aircraft import Aircraft
 
 class QuestManager:
     def __init__(self, game):
@@ -53,6 +54,8 @@ class QuestManager:
     def arrived_at_airport(self):
         self.update()
         icao = self.game.airport
+        aircraft = Aircraft(self.game)
+
         municipality = self.db.airport_municipality(self.game.airport)
 
         if self.has_flag("je_new_york") and municipality == "New York":
@@ -63,6 +66,18 @@ class QuestManager:
             customer.name        = "Jeffrey Epstein"
             customer.destination = "TIST"
             customer.reward = 50000
+            customer.save()
+
+        if (not self.has_flag("stubb_cooldown")) and icao == "EFHK" and aircraft.comfort >= 3:
+            self.add_flag("stubb_cooldown")
+
+            customer = Customer(self.db)
+            customer.origin      = icao
+            customer.name        = "Alexander Stubb"
+            customer.destination = "EBBR"
+            customer.reward      = 20000
+            customer.reward_rp   = 10
+            customer.min_comfort = 3
             customer.save()
 
     def completed_customer_flight(self, customer):

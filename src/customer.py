@@ -8,6 +8,8 @@ class Customer:
         self.db = db
         self.id = 0
 
+        self.min_comfort = 1
+        self.min_rp = 0
         self.deadline = 0
         self.reward   = 0
         self.reward_rp = 0
