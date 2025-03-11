@@ -108,7 +108,6 @@ class GameState:
             return
 
         airport = self.db.get_airport(icao)
-        airport.fees = 9999999999999
         distance = self.db.icao_distance(self.airport, target)
 
         aircraft = Aircraft(self)
