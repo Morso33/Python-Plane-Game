@@ -24,6 +24,12 @@ from aircraft import Aircraft
 # Arcane procedual programming techniques ;)
 #
 
+def create_progress_bar(progress: float, lenght: int) -> str:
+    progress = max(0.0, min(100.0, progress))
+    filled_lenght = int(lenght * progress)
+    bar = "|" * filled_lenght + "-" * (lenght-filled_lenght)
+    return bar
+
 class GameState:
     def __init__(self):
 
@@ -55,6 +61,9 @@ class GameState:
         self.cam = cam
         self.gfx = gfx
         self.win = win
+        self.fb = fb
+
+        self.status_w = 30
 
         self.quests = QuestManager(self)
 
@@ -98,6 +107,25 @@ class GameState:
             self.co2,
             self.aircraft_id
         ))
+
+    def status(self, row, text):
+        w = self.status_w
+        x = self.fb.w - w
+        #x += (w - len(text))//2
+
+        self.win.addstr(row, x, text.center(w))
+
+    def print_status(self):
+        win = self.win
+        w = self.status_w
+        aircraft = Aircraft(self)
+        self.status(0, aircraft.name)
+        bar = create_progress_bar( aircraft.fuel/aircraft.fuel_max, w-2)
+        self.status(1, f"[{bar}]")
+        self.status(2, f"{aircraft.range:.0f}km {self.rp}rp {self.co2/1000:.0f}tCO² ")
+        self.status(3, f"${self.money}")
+
+
 
     def fly_to(self, icao):
         target = icao.upper()
@@ -607,14 +635,10 @@ def main():
                 continue
             do_default = game.quests.completed_customer_flight(customer)
             if do_default:
-                impopup(game,
-                    [f"You have completed {customer.name}'s flight.",
-                    f"",
-                    f"+ ${customer.reward}",
-                    f"+ {customer.reward_rp} rp",
-                    ],
-                    ["Ok"]
-                )
+                popup = Popup(game)
+                popup.add_text(f"You have completed {customer.name}'s flight.\n")
+                popup.add_text(f"+ ${customer.reward}")
+                popup.add_text(f"+ {customer.reward_rp} rp")
                 game.money += customer.reward
                 game.rp    += customer.reward_rp
                 customer.drop()

@@ -64,6 +64,7 @@ class Popup:
             gfx.fb.scanout()
             if self.postpass != None:
                 self.postpass(game)
+            self.game.print_status()
 
             x = gfx.fb.w // 2 - w // 2
             y = gfx.fb.h // 2 - h // 2
