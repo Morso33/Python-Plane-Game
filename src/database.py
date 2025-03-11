@@ -62,6 +62,8 @@ class Database():
                 deadline    int     NOT NULL,
                 reward      int     NOT NULL,
                 reward_rp   int     NOT NULL,
+                min_comfort int     NOT NULL,
+                min_rp      int     NOT NULL,
                 accepted    int     NOT NULL,
 
                 PRIMARY KEY (id),
@@ -86,6 +88,7 @@ class Database():
             id INT PRIMARY KEY,
             name VARCHAR(50),
             category VARCHAR(10),
+            comfort INT,
             capacity INT,
             speed_kmh INT,
             range_km INT,
@@ -98,11 +101,16 @@ class Database():
         );""")
 
         cur.execute("""
-        INSERT INTO aircraft (id, name, category, capacity, speed_kmh, range_km, fuel, fuel_max, fuel_consumption_lph, co2_emissions_kgph, price, owned) VALUES
-        (1, 'Cessna 208 Caravan', 'Small',  9,   340, 1700,  1300,   1300,   220,   560,     3,   1),
-        (2, 'Learjet 75',         'Medium', 12,  860, 3700,  6000,   6000,   700,   1900,    5,   0),
-        (3, 'Boeing 747-8',       'Large',  400, 920, 14000, 240000, 240000, 12000, 30000, 250, 0)
+        INSERT INTO aircraft (id, name, category, comfort, capacity, speed_kmh, range_km, fuel, fuel_max, fuel_consumption_lph, co2_emissions_kgph, price, owned) VALUES
+        (1, 'Cessna 208 Caravan', 'Small', 1,  9,   340, 1700,  1300,   1300,   220,   560,     0,   1),
+        (2, 'Learjet 75',         'Medium',3,    12,  860, 3700,  6000,   6000,   700,   1900,   0,   0),
+        (3, 'Boeing 747-8',       'Large', 5,   400, 920, 14000, 240000, 240000, 12000, 30000, 0, 0)
         """)
+
+        # Set prices of airplanes explicitly
+        cur.execute("UPDATE aircraft SET price =   20000 WHERE id = 2")
+        cur.execute("UPDATE aircraft SET price = 1000000 WHERE id = 3")
+
         # (5, 'Boeing 747-8 VIP',   'Large',  50,  920, 14000, 240000, 240000, 12000, 30000, 250000000, 0, 0);
         #(2, 'DHC-6 Twin Otter',   'Medium', 19,  330, 1500,  2000,   2000,   400,   1000,    5000000,   0),
 
@@ -124,7 +132,7 @@ class Database():
         """)
         cur.execute("""
             INSERT INTO game (id, airport, money,   rp, co2, aircraft) VALUES
-                             (1,  "EFHK",  3000000, 0,  0,   1)
+                             (1,  "EFHK",  3000,    0,  0,   1)
         """)
 
 

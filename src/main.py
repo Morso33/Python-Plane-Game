@@ -24,6 +24,8 @@ from aircraft import Aircraft
 # Arcane procedual programming techniques ;)
 #
 
+roman = ["I", "II", "III", "IV", "V"]
+
 def create_progress_bar(progress: float, lenght: int) -> str:
     progress = max(0.0, min(100.0, progress))
     filled_lenght = int(lenght * progress)
@@ -317,10 +319,8 @@ def menu_find_customers(game):
         time = distance / aircraft.speed
         liters = aircraft.fuel_lph * time
 
-        popup.add_text(f"#{i}: {customer.origin}: {customer.name}")
+        popup.add_text(f"#{i}: {customer.origin}: {customer.name} ({customer.tier})")
 
-
-        #popup.add_text(f"{customer.origin} -> {customer.destination} ({airport_type})")
         popup.add_text(f"{airport.name}")
         popup.add_text(f"{airport.type_pretty} airport")
         popup.add_text(f"{int(distance)} km {time:.1f} h {liters:.1f} l")
@@ -338,7 +338,14 @@ def menu_find_customers(game):
     if action == "Return":
         return
 
-    customers[action-1].accept()
+    customer = customers[action-1]
+
+    if aircraft.comfort < customer.min_comfort:
+        #impopup(game, [f"Customer requires minimum comfort grade {aircraft.tier}, but your aircraft is of only {customer.tier} grade."])
+        impopup(game, [f"Comfort grade {aircraft.tier} is insufficient for a comfort grade {customer.tier} customer."])
+        return
+
+    customer.accept()
 
 
 
@@ -374,7 +381,7 @@ def menu_hangar(game):
         aircraft = Aircraft(game, ac[0])
 
         label = f"{aircraft.name:<19} | "
-        price = f"${aircraft.price} Mil"
+        price = f"${aircraft.price}"
 
         if aircraft.owned == True:
             price = "Owned"
@@ -385,15 +392,20 @@ def menu_hangar(game):
         popup.add_option( label, ac[0])
 
     popup.add_option("", -1)
+    popup.add_option("Upgrades", -2)
     popup.add_option("Return", -1)
 
     ret = popup.run()
+
+    if ret == -2:
+        menu_upgrades(game)
+        return
 
     if ret != -1:
         aircraft = Aircraft(game, ret)
 
         if aircraft.owned == False:
-            if game.money < aircraft.price * 1000000:
+            if game.money < aircraft.price:
                 impopup(game, ["Not enough money"], ["Ok"])
             else:
                 aircraft.purchase()
@@ -580,8 +592,15 @@ def menu_game_start(game):
         game.db.reset()
 
 
-def menu_refuel(game):
+def menu_upgrades(game):
+    popup = Popup(game)
 
+    popup.add_option(f"Upgrade comfort",   1)
+    popup.add_option(f"Upgrade efficiency",2)
+
+    popup.run()
+
+def menu_refuel(game):
     aircraft = Aircraft(game)
 
     if (aircraft.fuel == aircraft.fuel_max):
@@ -660,7 +679,7 @@ def main():
         popup.add_text(f"Aircraft:           {aircraft.name}" )
         popup.add_text(f"Fuel:               {aircraft.fuel:0.1f} / {aircraft.fuel_max:0.1f} liters" )
         popup.add_text(f"Range:              {aircraft.range:0.1f} km" )
-        popup.add_text(f"Comfort class:      I" )
+        popup.add_text(f"Comfort class:      {aircraft.comfort_pretty}" )
         popup.add_text(f"")
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")
@@ -670,6 +689,8 @@ def main():
             popup.add_option("Hangar")
         if airport.type != "small_airport":
             popup.add_option("Refuel")
+        if airport.type == "large_airport":
+            popup.add_option("Upgrades")
 
         popup.add_option("")
         popup.add_option("Developer options")
@@ -724,6 +745,8 @@ def main():
             menu_hangar(game)
         elif action == "Refuel":
             menu_refuel(game)
+        elif action == "Upgrades":
+            menu_upgrades(game)
         elif action == "Fly to destination":
             menu_fly(game)
 

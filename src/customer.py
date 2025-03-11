@@ -1,5 +1,7 @@
 import random
 
+roman = ["I", "II", "III", "IV", "V"]
+
 class Customer:
     def __init__(self, db):
         self.name = f"Customer{random.randint(1000, 9999)}"
@@ -19,9 +21,9 @@ class Customer:
         print("deadline    ", self.deadline)
         print("accepted    ", self.accepted)
 
-
-    def summary(self):
-        return f"{self.name:15} :: {self.origin:>8} -> {self.destination:8} :: ${self.reward} :: {'airport' if self.accepted==0 else 'boarded'}"
+    def drop(self):
+        cur = self.db.con.cursor()
+        cur.execute("DELETE FROM customer WHERE id = ?", (self.id,))
 
 
     def generate_tier1(self, origin_icao):
@@ -36,11 +38,12 @@ class Customer:
 
         distance = self.db.icao_distance(origin_icao,result[0])
 
-        #Splitted this monstrosity
-
-        rate = 4.0 # Price per KM
+        self.min_comfort = random.randint(1,2)
+        rate = 4.0 * self.min_comfort # Price per KM
         self.reward = round(distance * rate)
         self.reward_rp = 1
+
+        self.min_rp = 0
 
 
     def generate_tier2(self, origin_icao):
@@ -53,11 +56,12 @@ class Customer:
 
         distance = self.db.icao_distance(origin_icao,result[0])
 
-
-        rate = 4.0 # Price per KM
+        self.min_comfort = random.randint(2,4)
+        rate = 4.0 * self.min_comfort # Price per KM
         self.reward = round(distance * rate)
-
         self.reward_rp = 5
+
+        self.min_rp = 0
 
 
     def accept(self):
@@ -67,7 +71,8 @@ class Customer:
 
         self.accepted = 1
 
-
+    # Discard the class after saving !!!
+    # Saving always creates a NEW customer
     def save(self):
         cur = self.db.con.cursor()
         query = """
@@ -78,8 +83,10 @@ class Customer:
                 reward,
                 reward_rp,
                 deadline,
-                accepted
-            ) VALUES (?,?,?,?,?,?,?);
+                accepted,
+                min_comfort,
+                min_rp
+            ) VALUES (?,?,?,?,?,?,?,?,?);
         """
         cur.execute(query,
             (
@@ -89,14 +96,13 @@ class Customer:
                 self.reward,
                 self.reward_rp,
                 self.deadline,
-                self.accepted
+                self.accepted,
+                self.min_comfort,
+                self.min_rp,
             )
         )
 
 
-    def drop(self):
-        cur = self.db.con.cursor()
-        cur.execute("DELETE FROM customer WHERE id = ?", (self.id,))
 
     def load(self, customer_id):
         cur = self.db.con.cursor()
@@ -109,7 +115,9 @@ class Customer:
                 reward,
                 reward_rp,
                 deadline,
-                accepted
+                accepted,
+                min_comfort,
+                min_rp
             FROM customer WHERE id = ?;
         """
         cur.execute(query, (customer_id,))
@@ -123,3 +131,7 @@ class Customer:
         self.reward_rp   = result[5]
         self.deadline    = result[6]
         self.accepted    = result[7]
+        self.min_comfort = result[8]
+        self.min_rp      = result[9]
+
+        self.tier = roman[self.min_comfort-1]

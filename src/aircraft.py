@@ -1,5 +1,7 @@
 import random
 
+roman = ["I", "II", "III", "IV", "V"]
+
 class Aircraft:
     def __init__(self, game, aircraft_id=None):
         self.game        = game
@@ -16,11 +18,15 @@ class Aircraft:
         self.co2_kgph  = self.get_value("co2_emissions_kgph")
         self.fuel_lph  = self.get_value("fuel_consumption_lph")
         self.price     = self.get_value("price")
+        self.comfort   = self.get_value("comfort")
         self.owned     = self.get_value("owned") == 1
         self.selected  = game.aircraft_id == self.aircraft_id
 
         self.range_h   = (self.fuel / self.fuel_lph)
         self.range     = self.range_h * self.speed
+
+        self.comfort_pretty = roman[self.comfort-1]
+        self.tier = self.comfort_pretty
 
     def get_value(self, key):
         cur = self.db.con.cursor()
@@ -40,7 +46,7 @@ class Aircraft:
         query = "UPDATE aircraft SET owned = 1 WHERE id = ?"
         cur.execute(query, (self.aircraft_id,))
 
-        self.game.money -= self.price * 1000000
+        self.game.money -= self.price
         self.owned     = self.get_value("owned") == 1
 
 
