@@ -108,6 +108,7 @@ class GameState:
             return
 
         airport = self.db.get_airport(icao)
+        airport.fees = 9999999999999
         distance = self.db.icao_distance(self.airport, target)
 
         aircraft = Aircraft(self)
@@ -117,7 +118,6 @@ class GameState:
         fuel = aircraft.fuel_lph * time
 
         range_after = (aircraft.fuel - fuel) / aircraft.fuel_lph * aircraft.speed
-
         popup = Popup(self)
         popup.w = 60
         popup.add_text(f"Confirm flight to {icao}")
@@ -147,6 +147,9 @@ class GameState:
             if airport.type == "small_airport":
                 popup.add_text(f"Destination airport does not have fuel service.")
 
+        if self.money < airport.fees:
+            popup.add_text(f"You do not have enough money to cover the fees.")
+            allow_depart = False
 
 
         if allow_depart == True:
@@ -167,10 +170,11 @@ class GameState:
 
         self.airport = target
         self.co2 += co2
-        customers = self.db.customers_from_airport(icao)
-
+        self.money -= airport.fees
         aircraft.set_fuel(aircraft.fuel - fuel)
 
+        # Force-generate quests ?
+        customers = self.db.customers_from_airport(icao)
         self.quests.arrived_at_airport()
 
     def update_airport(self, icao):
@@ -657,6 +661,7 @@ def main():
                 "Return"])
             if action == "Reset":
                 game.db.reset()
+                game.load()
                 impopup(game, ["Database reset"], ["Ok"])
             elif action == "Freecam":
                 freecam(game)
