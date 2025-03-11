@@ -6,7 +6,7 @@ from geopy.distance import geodesic
 from customer import Customer
 
 # Change this value to cause database to reset
-SCHEMA_VERSION = "8"
+SCHEMA_VERSION = "1"
 
 class Database():
     def __init__(self):
@@ -28,15 +28,16 @@ class Database():
             self.reset()
 
 
+
      # Write the database schema here !!!
     def reset(self):
         #print("Resetting database")
         cur = self.con.cursor()
 
         # Clean lp.sql example tables
-        #cur.execute("DROP TABLE IF EXISTS goal;")
-        #cur.execute("DROP TABLE IF EXISTS goal_reached;")
-        #cur.execute("DROP TABLE IF EXISTS game;")
+        cur.execute("DROP TABLE IF EXISTS goal_reached;")
+        cur.execute("DROP TABLE IF EXISTS goal;")
+        cur.execute("DROP TABLE IF EXISTS game;")
 
 
         cur.execute("DROP TABLE IF EXISTS metadata;")
@@ -103,6 +104,30 @@ class Database():
         (4, 'Boeing 747-8',       'Large',  400, 920, 14000, 240000, 240000, 12000, 30000, 250.00, 0),
         (5, 'Boeing 747-8 VIP',   'Large',  50,  920, 14000, 240000, 240000, 12000, 30000, 250.00, 0);
         """)
+
+        cur.execute("DROP TABLE IF EXISTS game;")
+        cur.execute("""
+            CREATE TABLE game (
+                id          int     NOT NULL AUTO_INCREMENT,
+                airport        VARCHAR(40) NOT NULL,
+                money          INT     NOT NULL,
+                rp             INT     NOT NULL,
+                co2            FLOAT   NOT NULL,
+
+                aircraft       INT     NOT NULL,
+
+                PRIMARY KEY (id),
+
+                FOREIGN KEY(aircraft) REFERENCES aircraft(id)
+            );
+        """)
+        cur.execute("""
+            INSERT INTO game (id, airport, money,   rp, co2, aircraft) VALUES
+                             (1,  "EFHK",  3000000, 0,  0,   1)
+        """)
+
+
+
 
         # THIS MUST BE THE LAST LINE OF THIS FUNCTION
         self.metadata_set("schema", SCHEMA_VERSION)

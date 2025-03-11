@@ -26,14 +26,8 @@ import aircraft
 class GameState:
     def __init__(self):
 
-        # TODO Move these two to the database
-        self.money = 3_950_000
-        self.airport = "EFHK"
-        self.co2_emitted = 0
-
         self.db = database.Database()
-        #Kill customers
-        self.db.kill_all_customers()
+        self.load()
 
         # Curses initialization
         win = curses.initscr()
@@ -63,6 +57,46 @@ class GameState:
 
         self.quests = QuestManager(self)
 
+    def load(self):
+        cur = self.db.con.cursor()
+        query = """
+            SELECT
+                airport,
+                money,
+                rp,
+                co2,
+                aircraft,
+                id
+            FROM game WHERE id = 1;
+        """
+        cur.execute(query)
+        result = cur.fetchone()
+
+        self.airport     = result[0]
+        self.money       = result[1]
+        self.rp          = result[2]
+        self.co2         = result[3]
+        self.aircraft_id = result[4]
+
+
+    def save(self):
+        cur = self.db.con.cursor()
+        query = """
+            UPDATE game SET
+                airport = ?,
+                money = ?,
+                rp = ?,
+                co2 = ?,
+                aircraft = ?
+            WHERE id = 1;
+        """
+        cur.execute(query, (
+            self.airport,
+            self.money,
+            self.rp,
+            self.co2,
+            self.aircraft_id
+        ))
 
     def fly_to(self, icao):
         target = icao.upper()
@@ -119,7 +153,7 @@ class GameState:
         self.animate_travel(wp)
 
         self.airport = target
-        self.co2_emitted += co2_emissions
+        self.co2 += co2_emissions
         customers = self.db.customers_from_airport(icao)
 
 
@@ -503,7 +537,8 @@ def menu_game_start(game):
 
     popup.add_option("New Game")
     ret = popup.run()
-
+    if ret == "New Game":
+        game.db.reset()
 
 def main():
     game = GameState()
@@ -530,6 +565,7 @@ def main():
                 game.money += customer.reward
                 customer.drop()
 
+        game.save()
         popup = Popup(game)
         popup.w = 60
         airport = game.db.get_airport(game.airport)
@@ -537,7 +573,7 @@ def main():
         popup.add_text(f"{airport.municipality} ({airport.continent} {airport.iso_region})" )
         popup.add_text(f"" )
         popup.add_text(f"Money:              ${game.money}" )
-        popup.add_text(f"CO2 emissions:      {game.co2_emitted} kg" )
+        popup.add_text(f"CO2 emissions:      {game.co2} kg" )
         popup.add_text(f"" )
         popup.add_text(f"Aircraft:           {aircraft.selected_aircraft}" )
         popup.add_text(f"Aircraft class:     I" )
