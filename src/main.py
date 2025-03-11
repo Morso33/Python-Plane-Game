@@ -1,4 +1,5 @@
 import curses
+import math
 import time
 import database
 import random
@@ -115,6 +116,7 @@ class GameState:
         co2  = aircraft.co2_kgph * time
         fuel = aircraft.fuel_lph * time
 
+        range_after = (aircraft.fuel - fuel) / aircraft.fuel_lph * aircraft.speed
 
         popup = Popup(self)
         popup.w = 60
@@ -122,18 +124,34 @@ class GameState:
         popup.add_text(f"{airport.name}")
         popup.add_text(f"{airport.municipality}, {airport.iso_region}, {airport.continent}")
         popup.add_text(f"")
-        popup.add_text(f"Fees:            0 $")
-        popup.add_text(f"Fuel required:   {fuel:.1f} l (0%)")
-        popup.add_text(f"Current fuel:    {aircraft.fuel:.1f} l (0%)")
+        popup.add_text(f"${self.money}, {aircraft.fuel:.1f} / {aircraft.fuel_max:.1f} l")
+        popup.add_text(f"")
+        popup.add_text(f"Fees:            ${airport.fees}")
+        popup.add_text(f"Fuel required:   {fuel:.1f} l")
+        #popup.add_text(f"Current fuel:    {aircraft.fuel:.1f} l (0%)")
         popup.add_text(f"Flight distance: {distance:.1f} km")
         popup.add_text(f"Flight time:     {time:.1f} hours")
         popup.add_text(f"CO2 emitted:     {co2:.1f} kg")
+        popup.add_text(f"Spare range:     {range_after:.1f} km")
         popup.add_text(f"")
         popup.add_text(f"Airport type:    {airport.type_pretty}")
         popup.add_text(f"")
-        popup.add_text(f"TODO: Here should come text describing destination airport. Eg. if small_airport, player should be told they cannot refuel at destination, and should take extra fuel.")
+        #popup.add_text(f"TODO: Here should come text describing destination airport. Eg. if small_airport, player should be told they cannot refuel at destination, and should take extra fuel.")
 
-        popup.add_option("Depart")
+        allow_depart = True
+
+        if aircraft.fuel < fuel:
+            popup.add_text(f"You do not have enough fuel to reach this destination.")
+            allow_depart = False
+        else:
+            if airport.type == "small_airport":
+                popup.add_text(f"Destination airport does not have fuel service.")
+
+
+
+        if allow_depart == True:
+            popup.add_option("Depart")
+
         popup.add_option("Cancel")
         ret = popup.run()
         if ret == "Cancel":
@@ -522,7 +540,6 @@ def choose_airport_from_map(game):
 
 def menu_game_start(game):
     popup = Popup(game)
-    #game.db.reset()
     if game.quests.has_flag("game_start"):
         popup.add_option("Continue")
 
@@ -530,6 +547,43 @@ def menu_game_start(game):
     ret = popup.run()
     if ret == "New Game":
         game.db.reset()
+
+
+def menu_refuel(game):
+
+    aircraft = Aircraft(game)
+
+    if (aircraft.fuel == aircraft.fuel_max):
+        impopup(game, ["Your tanks are full."])
+        return
+
+    popup = Popup(game)
+
+    price_per_liter = 1.1
+
+    fuel_can_afford = game.money / price_per_liter
+    fuel = aircraft.fuel_max - aircraft.fuel
+
+    price = fuel * price_per_liter
+
+    price = math.ceil(price)
+
+    popup.add_text(f"Money:       ${game.money}")
+    popup.add_text(f"Fuel:        {aircraft.fuel:.1f} / {aircraft.fuel_max:.1f} liters")
+    popup.add_text(f"Fuel price:  ${price_per_liter} / liter")
+    #popup.add_text(f"")
+    #popup.add_text(f"You can afford {fuel_can_afford:.1f} liters.")
+
+    popup.add_option(f"Buy {fuel:.1f} liters for ${price}", "buy")
+    popup.add_option("Return")
+
+    ret = popup.run()
+
+    if ret == "buy":
+        game.money -= price
+        aircraft.set_fuel( aircraft.fuel + fuel )
+        impopup(game, ["Aircraft refueled."])
+
 
 def main():
     game = GameState()
@@ -582,8 +636,12 @@ def main():
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")
         popup.add_option("View your customers")
+
         if airport.ident == "EFHK":
             popup.add_option("Hangar")
+        if airport.type != "small_airport":
+            popup.add_option("Refuel")
+
         popup.add_option("")
         popup.add_option("Developer options")
         popup.add_option("Quit game")
@@ -607,22 +665,19 @@ def main():
             elif action == "Quest flags":
                 impopup(game, game.quests.all_flags(), ["Return"])
 
-            elif action == "+ $10 000 000":
+            elif action == "+ $10,000,000":
                 game.money += 10_000_000
                 impopup(game, ["$10 million added"], ["Ok"])
 
 
         elif action == "Look for customers":
             menu_find_customers(game)
-
         elif action == "View your customers":
             pass
-
         elif action == "Hangar":
             menu_hangar(game)
-
-
-
+        elif action == "Refuel":
+            menu_refuel(game)
         elif action == "Fly to destination":
             menu_fly(game)
 

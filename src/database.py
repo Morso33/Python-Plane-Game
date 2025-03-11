@@ -221,13 +221,18 @@ class Database():
         airport.iso_country        = data[13]
         airport.ident              = key
 
+        airport.fees = 0
+
         match airport.type:
             case "small_airport":
                 airport.type_pretty = "Small"
+                airport.fees = 50
             case "medium_airport":
                 airport.type_pretty = "Medium"
+                airport.fees = 200
             case "large_airport":
                 airport.type_pretty = "Large"
+                airport.fees = 1000
 
         return airport
 

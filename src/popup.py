@@ -44,6 +44,9 @@ class Popup:
         game = self.game
         gfx  = game.gfx
 
+        if (len(self.cmd) == 0):
+            self.add_option("Ok")
+
         sel = 0
         w = self.w
         h = 3 + len(self.txt) + len(self.cmd)
@@ -115,7 +118,7 @@ class Popup:
 
 # Immediate popup, convenience function for simple things
 # Yes we procedualice OOP code, deal with it
-def impopup(game, text, options):
+def impopup(game, text, options=[]):
     popup = Popup(game)
 
     for line in text:
