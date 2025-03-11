@@ -1,6 +1,6 @@
 import random
 
-roman = ["I", "II", "III", "IV", "V"]
+roman = ["I", "II", "III", "IV", "V", "VI"]
 
 class Customer:
     def __init__(self, db):

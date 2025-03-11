@@ -89,6 +89,8 @@ class Database():
             name VARCHAR(50),
             category VARCHAR(10),
             comfort INT,
+            upgrade_comfort    INT,
+            upgrade_efficiency INT,
             capacity INT,
             speed_kmh INT,
             range_km INT,
@@ -101,10 +103,10 @@ class Database():
         );""")
 
         cur.execute("""
-        INSERT INTO aircraft (id, name, category, comfort, capacity, speed_kmh, range_km, fuel, fuel_max, fuel_consumption_lph, co2_emissions_kgph, price, owned) VALUES
-        (1, 'Cessna 208 Caravan', 'Small', 1,  9,   340, 1700,  1300,   1300,   220,   560,     0,   1),
-        (2, 'Learjet 75',         'Medium',3,    12,  860, 3700,  6000,   6000,   700,   1900,   0,   0),
-        (3, 'Boeing 747-8',       'Large', 5,   400, 920, 14000, 240000, 240000, 12000, 30000, 0, 0)
+        INSERT INTO aircraft (id, name, category, comfort, capacity, speed_kmh, range_km, fuel, fuel_max, fuel_consumption_lph, co2_emissions_kgph, price, owned, upgrade_comfort, upgrade_efficiency) VALUES
+        (1, 'Cessna 208 Caravan', 'Small', 1,  9,   340, 1700,  1300,   1300,   220,   560,     0,   1, 0, 0),
+        (2, 'Learjet 75',         'Medium',3,    12,  860, 3700,  6000,   6000,   700,   1900,   0,   0, 0, 0),
+        (3, 'Boeing 747-8',       'Large', 5,   400, 920, 14000, 240000, 240000, 12000, 30000, 0, 0, 0, 0)
         """)
 
         # Set prices of airplanes explicitly
@@ -234,13 +236,10 @@ class Database():
         match airport.type:
             case "small_airport":
                 airport.type_pretty = "Small"
-                airport.fees = 50
             case "medium_airport":
                 airport.type_pretty = "Medium"
-                airport.fees = 200
             case "large_airport":
                 airport.type_pretty = "Large"
-                airport.fees = 1000
 
         return airport
 

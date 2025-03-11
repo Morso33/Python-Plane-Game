@@ -24,7 +24,7 @@ from aircraft import Aircraft
 # Arcane procedual programming techniques ;)
 #
 
-roman = ["I", "II", "III", "IV", "V"]
+roman = ["I", "II", "III", "IV", "V", "VI"]
 
 def create_progress_bar(progress: float, lenght: int) -> str:
     progress = max(0.0, min(100.0, progress))
@@ -121,7 +121,7 @@ class GameState:
         win = self.win
         w = self.status_w
         aircraft = Aircraft(self)
-        self.status(0, aircraft.name)
+        self.status(0, f"{aircraft.name} ({aircraft.tier})")
         bar = create_progress_bar( aircraft.fuel/aircraft.fuel_max, w-2)
         self.status(1, f"[{bar}]")
         self.status(2, f"{aircraft.range:.0f}km {self.rp}rp {self.co2/1000:.0f}tCO² ")
@@ -141,6 +141,25 @@ class GameState:
         distance = self.db.icao_distance(self.airport, target)
 
         aircraft = Aircraft(self)
+
+
+        fee_table = [0,0,0]
+        match aircraft.category:
+            case "Small":
+                fee_table = [10, 20, 100]
+            case "Medium":
+                fee_table = [10, 100, 1000]
+            case "Large":
+                fee_table = [10, 200, 2000]
+
+
+        match airport.type:
+            case "small_airport":
+                airport.fees = fee_table[0]
+            case "medium_airport":
+                airport.fees = fee_table[1]
+            case "large_airport":
+                airport.fees = fee_table[2]
 
         time = distance / aircraft.speed
         co2  = aircraft.co2_kgph * time
@@ -593,12 +612,57 @@ def menu_game_start(game):
 
 
 def menu_upgrades(game):
-    popup = Popup(game)
+    while True:
+        popup = Popup(game)
+        aircraft = Aircraft(game)
+        popup.w = 70
+        # Calculate these based on aircraft type
+        comfort_cost    = 0
+        efficiency_cost = 0
+        match aircraft.category:
+            case "Small":
+                comfort_cost    = 10000
+                efficiency_cost = 10000
+            case "Medium":
+                comfort_cost    = 20000
+                efficiency_cost = 20000
+            case "Large":
+                comfort_cost    = 50000
+                efficiency_cost = 50000
 
-    popup.add_option(f"Upgrade comfort",   1)
-    popup.add_option(f"Upgrade efficiency",2)
 
-    popup.run()
+        new_tier = roman[aircraft.comfort] # +1 but because 0-index -1 so 0
+
+        price_label = "Purchased" if aircraft.has_upgrade_comfort  else f"${comfort_cost}"
+        popup.add_text(f"Comfort Upgrade      {price_label}")
+        popup.add_text(f"Increases the comfort rating of your aircraft by one.")
+        popup.add_text("")
+
+        price_label = "Purchased" if aircraft.has_upgrade_efficiency  else f"${efficiency_cost}"
+        popup.add_text(f"Efficiency Upgrade   {price_label}")
+        popup.add_text(f"Reduces fuel consumption by -10% and CO² emissions by -20%.")
+
+
+        #popup.add_text(f"Efficiency {aircraft.has_upgrade_efficiency}")
+        #popup.add_text(f"Comfort {aircraft.has_upgrade_comfort}")
+
+        if not aircraft.has_upgrade_comfort and game.money >= comfort_cost:
+            popup.add_option(f"Upgrade comfort",   1)
+        if not aircraft.has_upgrade_efficiency and game.money >= efficiency_cost:
+            popup.add_option(f"Upgrade efficiency",2)
+
+        popup.add_option(f"Return",0)
+
+        ret = popup.run()
+
+        if ret == 1:
+            aircraft.upgrade_comfort()
+        elif ret == 2:
+            aircraft.upgrade_efficiency()
+        else:
+            break
+
+
 
 def menu_refuel(game):
     aircraft = Aircraft(game)
@@ -687,10 +751,9 @@ def main():
 
         if airport.ident == "EFHK":
             popup.add_option("Hangar")
+            popup.add_option("Upgrades")
         if airport.type != "small_airport":
             popup.add_option("Refuel")
-        if airport.type == "large_airport":
-            popup.add_option("Upgrades")
 
         popup.add_option("")
         popup.add_option("Developer options")
