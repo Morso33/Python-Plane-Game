@@ -82,6 +82,11 @@ class GameState:
         aircraft_emissions_per_h = aircraft.get_aircraft_co2_emissions(self.db.con, current_aircraft)
         co2_emissions = aircraft.calculate_co2_emissions(aircraft_flight_time, aircraft_emissions_per_h)
 
+        fuel_burn = 0
+        fuel_burn = aircraft.get_fuel_burn_per_km(self.db.con, current_aircraft) * aircraft_flight_time
+
+        fuel = aircraft.get_aircraft_fuel(self.db.con, current_aircraft)
+
         popup = Popup(self)
         popup.w = 60
         popup.add_text(f"Confirm flight to {icao}")
@@ -89,7 +94,8 @@ class GameState:
         popup.add_text(f"{airport.municipality}, {airport.iso_region}, {airport.continent}")
         popup.add_text(f"")
         popup.add_text(f"Fees:            0 $")
-        popup.add_text(f"Fuel required:   0 kg (0%)")
+        popup.add_text(f"Fuel required:   {fuel_burn:.1f} l (0%)")
+        popup.add_text(f"Current fuel:    {fuel[0]:.1f} l (0%)")
         popup.add_text(f"Flight distance: {distance:.1f} km")
         popup.add_text(f"Flight time:     {aircraft_flight_time} hours")
         popup.add_text(f"CO2 emitted:     {co2_emissions} kg")
@@ -115,6 +121,9 @@ class GameState:
         self.airport = target
         self.co2_emitted += co2_emissions
         customers = self.db.customers_from_airport(icao)
+
+
+        aircraft.set_aircraft_fuel(self.db.con, current_aircraft, fuel[0] - fuel_burn)
 
         self.quests.arrived_at_airport()
 

@@ -19,6 +19,11 @@ def get_aircraft_fuel(con, aircraft):
     result = cur.fetchone()
     return result
 
+def set_aircraft_fuel(con, aircraft, fuel):
+    cur = con.cursor()
+    query = "UPDATE aircraft SET fuel = ? WHERE name = ?"
+    cur.execute(query, (fuel, aircraft,))
+
 def is_aircraft_owned(con, aircraft):
     cur = con.cursor()
     query = "SELECT owned FROM aircraft WHERE name = ?"
