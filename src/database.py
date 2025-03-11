@@ -189,6 +189,7 @@ class Database():
         airport.iata_code          = data[11]
         airport.local_code         = data[12]
         airport.iso_country        = data[13]
+        airport.ident              = key
 
         match airport.type:
             case "small_airport":
