@@ -1,3 +1,3 @@
-mode con: cols=150 lines=80
+mode con: cols=180 lines=100
 .\venv\Scripts\python.exe src/main.py
 pause
