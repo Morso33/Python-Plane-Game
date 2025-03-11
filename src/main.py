@@ -235,7 +235,7 @@ class GameState:
             return
 
         # Make sure airport has at least N customers
-        customers_tier1 = 1 # Small airports always have one customer
+        customers_tier1 = random.randint(0,1)
         customers_tier2 = 0
         match airport_type:
             case "medium_airport":
@@ -285,6 +285,9 @@ class GameState:
                 gfx.fb.scanout()
                 gfx.win.refresh()
             anim_t0 = anim_t1
+
+
+
 
 
 
@@ -360,7 +363,6 @@ def menu_find_customers(game):
     customer = customers[action-1]
 
     if aircraft.comfort < customer.min_comfort:
-        #impopup(game, [f"Customer requires minimum comfort grade {aircraft.tier}, but your aircraft is of only {customer.tier} grade."])
         impopup(game, [f"Comfort grade {aircraft.tier} is insufficient for a comfort grade {customer.tier} customer."])
         return
 
@@ -368,6 +370,21 @@ def menu_find_customers(game):
 
 
 
+
+def menu_fly_postpass(game):
+    customers = game.db.accepted_customers()
+    i = 0
+    for customer in customers:
+        i+=1
+        gps = game.db.airport_xy_icao(customer.destination)
+        put_gps_text(game.gfx.fb, game.cam, gps, f"● {customer.destination}")
+
+def menu_fly_prepass(game):
+    customers = game.db.accepted_customers()
+    for customer in customers:
+        gps = game.db.airport_xy_icao(customer.destination)
+        wp = compute_geodesic(game.cam.gps, gps)
+        game.gfx.draw_waypoints(game.cam, wp)
 
 def menu_fly(game):
     customers = game.db.accepted_customers()
@@ -377,13 +394,17 @@ def menu_fly(game):
         i+=1
         popup.add_text(f"#{i}: {customer.name}")
         popup.add_text(f"{customer.origin} -> {customer.destination}")
-        popup.add_text(f"Reward: ${customer.reward}")
         popup.add_text(f"")
 
         popup.add_option(f"Fly to {customer.destination}", customer.destination)
 
     popup.add_option(f"Choose on map")
     popup.add_option(f"Return")
+
+
+    popup.offscreen = True
+    popup.postpass = menu_fly_postpass
+    popup.prepass  = menu_fly_prepass
     target = popup.run()
 
     if (target == "Choose on map"):
@@ -557,7 +578,8 @@ def choose_airport_from_map(game):
 
         gfx.fb.scanout()
 
-        t_end = time.time()
+        menu_fly_postpass(game)
+
 
         if (cam.zoom <= 15.0):
             draw_large_airports(gfx.fb, cam, game.db.con)
@@ -566,6 +588,8 @@ def choose_airport_from_map(game):
             draw_medium_airports(gfx.fb, cam, game.db.con)
 
         gfx.win.addstr( gfx.fb.h//2, gfx.fb.w//2, "X" )
+
+        t_end = time.time()
 
         gfx.win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}")
         gfx.win.addstr(2,0,f"Closest: {closest_icao}")
@@ -642,10 +666,6 @@ def menu_upgrades(game):
         popup.add_text(f"Efficiency Upgrade   {price_label}")
         popup.add_text(f"Reduces fuel consumption by -10% and CO² emissions by -20%.")
 
-
-        #popup.add_text(f"Efficiency {aircraft.has_upgrade_efficiency}")
-        #popup.add_text(f"Comfort {aircraft.has_upgrade_comfort}")
-
         if not aircraft.has_upgrade_comfort and game.money >= comfort_cost:
             popup.add_option(f"Upgrade comfort",   1)
         if not aircraft.has_upgrade_efficiency and game.money >= efficiency_cost:
@@ -685,8 +705,6 @@ def menu_refuel(game):
     popup.add_text(f"Money:       ${game.money}")
     popup.add_text(f"Fuel:        {aircraft.fuel:.1f} / {aircraft.fuel_max:.1f} liters")
     popup.add_text(f"Fuel price:  ${price_per_liter} / liter")
-    #popup.add_text(f"")
-    #popup.add_text(f"You can afford {fuel_can_afford:.1f} liters.")
 
     popup.add_option(f"Buy {fuel:.1f} liters for ${price}", "buy")
     popup.add_option("Return")
