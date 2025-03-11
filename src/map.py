@@ -108,7 +108,7 @@ from vec3 import *
 
 # Character palette used for rendering
 #lut = (" ","▘","▝","▀","▖","▌","▞","▛","▗","▚","▐","▜","▄","▙","▟","█");
-lut = (" ","`","'","\"",",",":","/","F",".","\\",":","\\","_","b","d","-");
+lut = (" ","`","'","\"",",",":","/","F",".","\\",":","\\","_","b","d","-")
 
 
 
@@ -157,7 +157,7 @@ def compute_geodesic(gps_a, gps_b):
     steps = 15
 
     for step in range(0, steps+1):
-        t = (step/steps);
+        t = (step/steps)
 
         # Interpolate between two vectors
         c = [
@@ -269,7 +269,7 @@ class FrameBuffer:
 class Camera:
     def __init__(self):
         self.gps = [0, 0]
-        self.zoom = 30;
+        self.zoom = 30
         self.bbox = [0,0,0,0]
         self.aspect = 1.0
 
@@ -296,7 +296,7 @@ class Camera:
 
         self.scale  = [(bbox[2] - bbox[0]), (bbox[3] - bbox[1])]
         self.offset = [bbox[0], bbox[1]]
-        self.bbox = bbox;
+        self.bbox = bbox
 
 
 

@@ -25,8 +25,6 @@ class Customer:
         return f"{self.name:15} :: {self.origin:>8} -> {self.destination:8} :: ${self.reward} :: {'airport' if self.accepted==0 else 'boarded'}"
 
 
-
-
     def generate_tier1(self, origin_icao):
         self.origin = origin_icao
         cur = self.db.con.cursor()
@@ -39,8 +37,10 @@ class Customer:
 
         distance = self.db.icao_distance(origin_icao,result[0])
 
-        # Todo split this monstrosity
-        self.reward = aircraft.get_payout(distance, aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft()), aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft()))
+        #Splitted this monstrosity
+        fuel_burn = aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft())
+        selected_aircraft = aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft())
+        self.reward = aircraft.get_payout(distance, fuel_burn, selected_aircraft)
 
 
     def generate_tier2(self, origin_icao):
@@ -53,9 +53,10 @@ class Customer:
 
         distance = self.db.icao_distance(origin_icao,result[0])
 
-        # Todo split this monstrosity
-        self.reward = aircraft.get_payout(distance, aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft()), aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft()))
-
+        #Splitted this monstrosity
+        fuel_burn = aircraft.get_fuel_burn_per_km(self.db.con, aircraft.get_selected_aircraft())
+        selected_aircraft = aircraft.get_aircraft_type(self.db.con, aircraft.get_selected_aircraft())
+        self.reward = aircraft.get_payout(distance, fuel_burn, selected_aircraft)
 
 
     def accept(self):
@@ -64,8 +65,6 @@ class Customer:
         cur.execute(query, (self.id,))
 
         self.accepted = 1
-
-
 
 
     def save(self):
@@ -119,6 +118,3 @@ class Customer:
         self.reward      = result[4]
         self.deadline    = result[5]
         self.accepted    = result[6]
-
-
-
