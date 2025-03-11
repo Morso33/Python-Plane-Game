@@ -654,9 +654,10 @@ def main():
             action = impopup(game, [], [
                 "Freecam",
                 "Reset",
-                "Fly to KJFK",
                 "Quest flags",
+                "Fly to KJFK",
                 "+ $10,000,000",
+                "Become broke",
                 "Return"])
             if action == "Reset":
                 game.db.reset()
@@ -668,6 +669,8 @@ def main():
                 game.fly_to("KJFK")
             elif action == "Quest flags":
                 impopup(game, game.quests.all_flags(), ["Return"])
+            elif action == "Become broke":
+                game.money = 0
 
             elif action == "+ $10,000,000":
                 game.money += 10_000_000
