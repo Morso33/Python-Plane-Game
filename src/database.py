@@ -37,9 +37,9 @@ class Database():
         cur = self.con.cursor()
 
         # Clean lp.sql example tables
-        cur.execute("DROP TABLE IF EXISTS goal;")
-        cur.execute("DROP TABLE IF EXISTS goal_reached;")
-        cur.execute("DROP TABLE IF EXISTS game;")
+        #cur.execute("DROP TABLE IF EXISTS goal;")
+        #cur.execute("DROP TABLE IF EXISTS goal_reached;")
+        #cur.execute("DROP TABLE IF EXISTS game;")
 
 
         cur.execute("DROP TABLE IF EXISTS metadata;")
