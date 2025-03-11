@@ -184,7 +184,18 @@ class GameState:
         popup.add_text(f"")
         popup.add_text(f"Airport type:    {airport.type_pretty}")
         popup.add_text(f"")
-        #popup.add_text(f"TODO: Here should come text describing destination airport. Eg. if small_airport, player should be told they cannot refuel at destination, and should take extra fuel.")
+        def get_airport_description(airport_type):
+            if airport_type == "small_airport":
+                return "The destination is a small airport with limited services. Refueling is not available, so ensure you have enough fuel for the return journey."
+            elif airport_type == "medium_airport":
+                return "The destination is a medium-sized airport with basic refueling and maintenance services."
+            elif airport_type == "large_airport":
+                return "The destination is a large airport with full services, including refueling and maintenance."
+            else:
+                return "Unknown airport type. Check the airport facilities before departure."
+
+        airport_type = "small_airport"  # Example airport type
+        popup.add_text(f"{get_airport_description(airport_type)}")
 
         allow_depart = True
 
