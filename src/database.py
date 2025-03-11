@@ -1,4 +1,5 @@
 import mariadb
+import types
 from geopy.distance import great_circle
 from geopy.distance import geodesic
 
@@ -137,6 +138,68 @@ class Database():
             exit()
         return [coords[1],coords[0]]
 
+    def airport_data(self, key, value):
+        cur = self.con.cursor()
+        query = f"SELECT {value} FROM airport WHERE ident = ?"
+        cur.execute(query, (key,))
+        data = cur.fetchone()
+        if data == None:
+            print("Virheellinen ICAO-koodi")
+            exit()
+        return data[0]
+
+    def get_airport(self, key):
+        cur = self.con.cursor()
+        query ="""
+            SELECT 
+                id,
+                type,
+                name,
+                latitude_deg,
+                longitude_deg,
+                elevation_ft,
+                continent,
+                iso_region,
+                municipality,
+                scheduled_service,
+                gps_code,
+                iata_code,
+                local_code,
+                iso_country
+             FROM airport WHERE ident = ? ;
+        """
+        cur.execute(query, (key,))
+        data = cur.fetchone()
+        if data == None:
+            print("Virheellinen ICAO-koodi")
+            exit()
+
+        airport = types.SimpleNamespace()
+        airport.id                 = data[0]
+        airport.type               = data[1]
+        airport.name               = data[2]
+        airport.latitude_deg       = data[3]
+        airport.longitude_deg      = data[4]
+        airport.elevation_ft       = data[5]
+        airport.continent          = data[6]
+        airport.iso_region         = data[7]
+        airport.municipality       = data[8]
+        airport.scheduled_service  = data[9]
+        airport.gps_code           = data[10]
+        airport.iata_code          = data[11]
+        airport.local_code         = data[12]
+        airport.iso_country        = data[13]
+
+        match airport.type:
+            case "small_airport":
+                airport.type_pretty = "Small"
+            case "medium_airport":
+                airport.type_pretty = "Medium"
+            case "large_airport":
+                airport.type_pretty = "Large"
+
+        return airport
+
     def airport_type_icao(self, key):
         cur = self.con.cursor()
         query = "SELECT type FROM airport WHERE ident=%s"
@@ -160,6 +223,16 @@ class Database():
     def airport_municipality(self, key):
         cur = self.con.cursor()
         query = "SELECT municipality FROM airport WHERE ident=%s"
+        cur.execute(query, (key,))
+        data = cur.fetchone()
+        if data == None:
+            print("Virheellinen ICAO-koodi")
+            exit()
+        return data[0]
+
+    def airport_name(self, key):
+        cur = self.con.cursor()
+        query = "SELECT name FROM airport WHERE ident=%s"
         cur.execute(query, (key,))
         data = cur.fetchone()
         if data == None:

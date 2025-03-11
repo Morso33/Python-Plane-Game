@@ -71,6 +71,31 @@ class GameState:
         if self.airport == target:
             return
 
+        airport = self.db.get_airport(icao)
+
+        distance = self.db.icao_distance(self.airport, target)
+
+        popup = Popup(self)
+        popup.w = 60
+        popup.add_text(f"Confirm flight to {icao}")
+        popup.add_text(f"{airport.name}")
+        popup.add_text(f"{airport.municipality}, {airport.iso_region}, {airport.continent}")
+        popup.add_text(f"")
+        popup.add_text(f"Fees:            0 $")
+        popup.add_text(f"Fuel required:   0 kg (0%)")
+        popup.add_text(f"Flight distance: {distance:.1f} km")
+        popup.add_text(f"Flight time:     0 hours")
+        popup.add_text(f"CO2 emitted:     0 grams")
+        popup.add_text(f"")
+        popup.add_text(f"Airport type:    {airport.type_pretty}")
+        popup.add_text(f"")
+        popup.add_text(f"TODO: Here should come text describing destination airport. Eg. if small_airport, player should be told they cannot refuel at destination, and should take extra fuel.")
+
+        popup.add_option("Depart")
+        popup.add_option("Cancel")
+        ret = popup.run()
+        if ret == "Cancel":
+            return
         # Zoom out the map to at least 15deg zoom for flights
         self.cam.zoom = max(self.cam.zoom, 15)
 
