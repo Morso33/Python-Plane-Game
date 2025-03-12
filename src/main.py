@@ -752,28 +752,53 @@ def menu_refuel(game):
 
     popup = Popup(game)
 
+    popup.w = 50
+
     price_per_liter = 1.1
+    eco_tax = 1.15
 
-    fuel_can_afford = game.money / price_per_liter
     fuel = aircraft.fuel_max - aircraft.fuel
-
     price = fuel * price_per_liter
-
     price = math.ceil(price)
+    eco_price = math.ceil(price*eco_tax)
+
+    time        = fuel / aircraft.fuel_lph
+    co2_refund  = (time * aircraft.co2_kgph) * 0.75
 
     popup.add_text(f"Money:       ${game.money}")
     popup.add_text(f"Fuel:        {aircraft.fuel:.1f} / {aircraft.fuel_max:.1f} liters")
-    popup.add_text(f"Fuel price:  ${price_per_liter} / liter")
+    popup.add_text(f"\nFuel prices:")
+    popup.add_text(f"Fossil:      ${price_per_liter:.2f} / liter")
+    popup.add_text(f"Renewable:   ${price_per_liter*eco_tax:.2f} / liter (refunds {co2_refund/1000:.1f} tCO²)")
 
-    popup.add_option(f"Buy {fuel:.1f} liters for ${price}", "buy")
+    popup.add_option(f"Refuel for ${price}", "buy")
+    popup.add_option(f"Refuel for ${eco_price} (-{co2_refund/1000:.1f} tCO²)", "buyeco")
     popup.add_option("Return")
 
     ret = popup.run()
 
+    if ret == "buyeco":
+        game.money -= eco_price
+        if game.money < 0:
+            game.money += eco_price
+            impopup(game, ["Can't afford."])
+            return
+
+        aircraft.set_fuel( aircraft.fuel + fuel )
+        game.co2 -= co2_refund
+        impopup(game, ["Aircraft refueled."])
+
     if ret == "buy":
+        game.money -= price
+        if game.money < 0:
+            game.money += price
+            impopup(game, ["Can't afford."])
+            return
         game.money -= price
         aircraft.set_fuel( aircraft.fuel + fuel )
         impopup(game, ["Aircraft refueled."])
+
+
 
 
 def main():
