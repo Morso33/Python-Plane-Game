@@ -388,7 +388,7 @@ def menu_fly_postpass(game):
     for customer in customers:
         i+=1
         gps = game.db.airport_xy_icao(customer.destination)
-        put_gps_text(game.gfx.fb, game.cam, gps, f"● {customer.destination}")
+        put_gps_text(game.gfx.fb, game.cam, gps, f"● {customer.destination}($)")
 
 def menu_fly_prepass(game):
     customers = game.db.accepted_customers()
@@ -574,6 +574,9 @@ def choose_airport_from_map(game):
             if (cam.zoom <= 7.5):
                 query = 'SELECT longitude_deg, latitude_deg, ident FROM airport WHERE type IN ("medium_airport", "large_airport")'
             cur.execute(query)
+
+
+
             for (lon, lat, ident) in cur:
                 put_gps_text(game.gfx.fb, cam, (lon,lat), f"● {ident}")
                 # Square root not necessary, we don't need the true distance,
@@ -582,6 +585,19 @@ def choose_airport_from_map(game):
                 if (closest_distance > distance):
                     closest_distance = distance
                     closest_icao = ident
+
+            customers = game.db.accepted_customers()
+            for customer in customers:
+                ident = customer.destination
+                gps = game.db.airport_xy_icao(ident)
+                lon = gps[0]
+                lat = gps[1]
+                distance = (lon - cam.gps[0])**2 + (lat - cam.gps[1])**2
+                if (closest_distance > distance):
+                    closest_distance = distance
+                    closest_icao = ident
+
+
 
 
         waypoints = compute_geodesic(pos, game.db.airport_xy_icao(closest_icao))
