@@ -199,30 +199,28 @@ class GameState:
         popup.add_text(f"")
         popup.add_text(f"Airport type:    {airport.type_pretty}")
         popup.add_text(f"")
-        def get_airport_description(airport_type):
-            if airport_type == "small_airport":
-                return "The destination is a small airport with limited services. Refueling is not available, so ensure you have enough fuel for the return journey."
-            elif airport_type == "medium_airport":
-                return "The destination is a medium-sized airport with basic refueling and maintenance services."
-            elif airport_type == "large_airport":
-                return "The destination is a large airport with full services, including refueling and maintenance."
-            else:
-                return "Unknown airport type. Check the airport facilities before departure."
 
-        airport_type = "small_airport"  # Example airport type
-        popup.add_text(f"{get_airport_description(airport_type)}")
+        legend = ""
+        match airport.type:
+            case "small_airport":
+                legend = "The destination is a small airport with limited services. Refueling is not available, so ensure you have enough fuel for the return journey."
+            case "medium_airport":
+                legend = "The destination is a medium-sized airport with basic refueling and maintenance services."
+            case "large_airport":
+                legend = "The destination is a large airport with full services, including refueling and maintenance."
+            case _:
+                legend = "Unknown airport type. Check the airport facilities before departure."
+
+        popup.add_text(legend)
 
         allow_depart = True
 
         if aircraft.fuel < fuel:
-            popup.add_text(f"You do not have enough fuel to reach this destination.")
+            popup.add_text(f"\nYou do not have enough fuel to reach this destination.")
             allow_depart = False
-        else:
-            if airport.type == "small_airport":
-                popup.add_text(f"Destination airport does not have fuel service.")
 
         if self.money < airport.fees:
-            popup.add_text(f"You do not have enough money to cover the fees.")
+            popup.add_text(f"\nYou do not have enough money to cover the fees.")
             allow_depart = False
 
 
