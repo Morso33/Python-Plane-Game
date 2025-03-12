@@ -128,9 +128,20 @@ class GameState:
         self.status(0, f"{aircraft.name} ({aircraft.tier})")
         bar = create_progress_bar( aircraft.fuel/aircraft.fuel_max, w-2)
         self.status(1, f"[{bar}]")
-        self.status(2, f"{aircraft.range:.0f}km {self.rp}rp {self.co2/1000:.0f}tCO² ")
-        self.status(3, f"${self.money}")
 
+        km = f"{aircraft.range:.0f} km"
+        rp = f"{self.rp} rp"
+        co = f"{self.co2/1000:.0f} tCO²"
+
+
+        w = self.status_w
+        x = self.fb.w - w
+
+        self.status(2, co)
+        self.win.addstr(2, x, km)
+        self.win.addstr(2, x+(w-len(rp)), rp)
+
+        self.status(3, f"${self.money}")
 
 
     def fly_to(self, icao):
@@ -813,13 +824,14 @@ def main():
         popup.add_text(f"")
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")
-        popup.add_option("View your customers")
+        #popup.add_option("View your customers") TODO ?
 
-        if airport.ident == "EFHK":
-            popup.add_option("Hangar")
-            popup.add_option("Upgrades")
         if airport.type != "small_airport":
             popup.add_option("Refuel")
+        if airport.ident == "EFHK":
+            popup.add_option("")
+            popup.add_option("Hangar")
+            popup.add_option("Upgrades")
 
         popup.add_option("")
         popup.add_option("Developer options")

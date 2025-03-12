@@ -156,7 +156,7 @@ def compute_geodesic(gps_a, gps_b):
 
     map_distance = math.sqrt( (gps_a[0]-gps_b[0])**2 + (gps_b[1]-gps_b[1])**2 );
 
-    if map_distance < 15:
+    if map_distance < 7.5:
         waypoints.append(gps_a)
         waypoints.append(gps_b)
         return waypoints
