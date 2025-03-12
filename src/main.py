@@ -176,6 +176,9 @@ class GameState:
             case "large_airport":
                 airport.fees = fee_table[2]
 
+        if self.quests.has_flag(f"{icao}_discount"):
+           airport.fees = 0
+
         time = distance / aircraft.speed
         co2  = aircraft.co2_kgph * time
         fuel = aircraft.fuel_lph * time
@@ -754,6 +757,11 @@ def menu_refuel(game):
     popup.w = 50
 
     price_per_liter = 1.1
+
+    has_discount = game.quests.has_flag(f"{game.airport}_discount")
+    if has_discount:
+        price_per_liter *= 0.5
+
     eco_tax = 1.15
 
     fuel = aircraft.fuel_max - aircraft.fuel
@@ -769,6 +777,9 @@ def menu_refuel(game):
     popup.add_text(f"\nFuel prices:")
     popup.add_text(f"Fossil:      ${price_per_liter:.2f} / liter")
     popup.add_text(f"Renewable:   ${price_per_liter*eco_tax:.2f} / liter (refunds {co2_refund/1000:.1f} tCO²)")
+
+    if has_discount:
+        popup.add_text("\n-50% discount applied")
 
     popup.add_option(f"Refuel for ${price}", "buy")
     popup.add_option(f"Refuel for ${eco_price} (-{co2_refund/1000:.1f} tCO²)", "buyeco")

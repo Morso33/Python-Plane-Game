@@ -12,16 +12,16 @@ class QuestManager:
 
     def add_flag(self, flag):
         cur = self.db.con.cursor()
-        cur.execute("REPLACE INTO quest (flag) VALUES (?)", (flag,))
+        cur.execute("REPLACE INTO quest (flag) VALUES (?)", (flag.lower(),))
 
     def has_flag(self, flag):
         cur = self.db.con.cursor()
-        cur.execute("SELECT flag FROM quest WHERE flag = ?", (flag,))
+        cur.execute("SELECT flag FROM quest WHERE flag = ?", (flag.lower(),))
         return len(cur.fetchall()) != 0
 
     def del_flag(self, flag):
         cur = self.db.con.cursor()
-        cur.execute("DELETE FROM quest WHERE flag = ?", (flag,))
+        cur.execute("DELETE FROM quest WHERE flag = ?", (flag.lower(),))
 
     def all_flags(self):
         cur = self.db.con.cursor()
@@ -35,8 +35,7 @@ class QuestManager:
         if not self.has_flag("game_start"):
             flags = [
                 "game_start",
-                "test_del",
-                "je_new_york"
+                "test_del"
             ]
 
             for flag in flags:
@@ -66,6 +65,7 @@ class QuestManager:
 
     def completed_customer_flight(self, customer):
         self.update()
+
         if customer.name == "Jeffrey Epstein":
             popup = Popup(self.game)
 
@@ -83,7 +83,7 @@ class QuestManager:
             ret = popup.run()
 
             if (ret == "Accept"):
-                self.add_flag("je_accept")
+                self.add_flag("epstein_accept")
                 customer.reward += 100000
                 popup = Popup(self.game)
                 popup.set_portrait(customer.name)
@@ -96,17 +96,33 @@ class QuestManager:
 
                 ret = popup.run()
 
-            return True
+        if customer.name == "Alexander Stubb":
+            popup = Popup(self.game)
+
+            popup.set_portrait(customer.name)
+            popup.add_text(customer.name)
+            popup.add_text("")
+            popup.add_text(
+                "Thank you for the great flight. I'll tell Helsinki airport staff to give you a discount on fuel and fees."
+            )
+
+            self.add_flag("efhk_discount")
+
+            ret = popup.run()
+
+
         return True
 
 
 
     def spawn_stubb(self, aircraft):
         flag = "stubb_spawned"
+        min_comfort = 3
+
         if (self.has_flag(flag)):
             return
 
-        if aircraft.comfort < 3:
+        if aircraft.comfort < min_comfort:
             return
 
         customer = Customer(self.db)
@@ -115,16 +131,18 @@ class QuestManager:
         customer.destination = "EBBR"
         customer.reward      = 20000
         customer.reward_rp   = 10
-        customer.min_comfort = 3
+        customer.min_comfort = min_comfort
         customer.save()
         self.add_flag(flag)
 
     def spawn_epstein(self, aircraft):
         flag = "epstein_spawned"
+        min_comfort = 4
+
         if (self.has_flag(flag)):
             return
 
-        if aircraft.comfort < 3:
+        if aircraft.comfort < min_comfort:
             return
 
         customer = Customer(self.db)
@@ -133,7 +151,7 @@ class QuestManager:
         customer.destination = "TIST"
         customer.reward      = 50000
         customer.reward_rp   = 10
-        customer.min_comfort = 3
+        customer.min_comfort = min_comfort
         customer.save()
         self.add_flag(flag)
 
