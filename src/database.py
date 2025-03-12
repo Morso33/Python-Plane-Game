@@ -105,8 +105,8 @@ class Database():
         cur.execute("""
         INSERT INTO aircraft (id, name, category, comfort, capacity, speed_kmh, range_km, fuel, fuel_max, fuel_consumption_lph, co2_emissions_kgph, price, owned, upgrade_comfort, upgrade_efficiency) VALUES
         (1, 'Cessna 208 Caravan', 'Small', 1,  9,   340, 1700,  1300,   1300,   220,   560,     0,   1, 0, 0),
-        (2, 'Learjet 75',         'Medium',3,    12,  860, 3700,  6000,   6000,   700,   1900,   0,   0, 0, 0),
-        (3, 'Boeing 747-8',       'Large', 5,   400, 920, 14000, 240000, 240000, 12000, 30000, 0, 0, 0, 0)
+        (2, 'Learjet 75',         'Medium',3,  12,  860, 3700,  6000,   6000,   700,   1900,   0,   0, 0, 0),
+        (3, 'Boeing 747-8',       'Large', 5,  400, 920, 14000, 240000, 240000, 12000, 30000, 0, 0, 0, 0)
         """)
 
         # Set prices of airplanes explicitly
@@ -134,7 +134,7 @@ class Database():
         """)
         cur.execute("""
             INSERT INTO game (id, airport, money,   rp, co2, aircraft) VALUES
-                             (1,  "EFHK",  3000,    0,  0,   1)
+                             (1,  "EFHK",  500,    0,  0,   1)
         """)
 
 

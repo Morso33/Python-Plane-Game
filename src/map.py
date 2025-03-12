@@ -280,7 +280,7 @@ class FrameBuffer:
 class Camera:
     def __init__(self):
         self.gps = [0, 0]
-        self.zoom = 30
+        self.zoom = 30/2
         self.bbox = [0,0,0,0]
         self.aspect = 1.0
 

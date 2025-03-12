@@ -412,6 +412,7 @@ def menu_find_customers(game):
         impopup(game, [f"Comfort grade {aircraft.tier} is insufficient for a comfort grade {customer.tier} customer."])
         return
 
+    game.quests.accepted_customer(customer)
     customer.accept()
 
 
@@ -870,7 +871,8 @@ def main():
 
         if airport.type != "small_airport":
             popup.add_option("Refuel")
-        if airport.ident == "EFHK":
+
+        if game.quests.has_flag(f"{airport.ident}_hangar"):
             popup.add_option("")
             popup.add_option("Hangar")
             popup.add_option("Upgrades")

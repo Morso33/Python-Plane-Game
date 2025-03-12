@@ -4,6 +4,8 @@ from customer import Customer
 from popup import Popup, impopup
 from aircraft import Aircraft
 
+tutorial_dude = "Paavo Pörssi"
+
 class QuestManager:
     def __init__(self, game):
         self.game = game
@@ -50,9 +52,21 @@ class QuestManager:
 
     def tutorial_quest(self):
         popup = Popup(self.game)
-        popup.add_text("Welcome! This is a placeholder for tutorial quest.")
-        popup.add_option("Continue")
+        popup.w += 7
+        popup.set_portrait("Businessman")
+        popup.add_text(f"{tutorial_dude}\n")
+        popup.add_text("I need an urgent flight to Soini Airfield. You can find me in the 'Look for customers' menu.")
         popup.run()
+
+        customer = Customer(self.db)
+        customer.name        = tutorial_dude
+        customer.origin      = self.game.airport
+        customer.destination = "FI-0008"
+        customer.reward      = 3000
+        customer.reward_rp   = 5
+        customer.min_comfort = 1
+        customer.save()
+
 
     def arrived_at_airport(self):
         self.update()
@@ -62,9 +76,31 @@ class QuestManager:
         municipality = self.db.airport_municipality(self.game.airport)
 
 
+    def accepted_customer(self, customer):
+        if customer.name == tutorial_dude:
+            popup = Popup(self.game)
+            popup.w += 7
+            popup.set_portrait("Businessman")
+            popup.add_text(f"{tutorial_dude}\n")
+            popup.add_text("Great. Now fly me to my destination by selecting it from the map, or directly from the 'Fly to destination' menu.")
+            popup.run()
+
 
     def completed_customer_flight(self, customer):
         self.update()
+
+
+        if customer.name == tutorial_dude:
+            popup = Popup(self.game)
+            popup.w += 7
+            popup.set_portrait("Businessman")
+            popup.add_text(f"{tutorial_dude}\n")
+            popup.add_text("Thank you! You are an excellent pilot. You will one day taxi the president of the United States, I'm sure! ")
+            popup.add_text("\n")
+            popup.add_text("I'll help get your new air taxi business started. You can use my hangar at Helsinki Airport to store and upgrade your aircraft.")
+            popup.run()
+            self.add_flag("EFHK_hangar")
+            impopup(self.game, ["You have unlocked the Hangar at Helsinki Airport (EFHK)"])
 
         if customer.name == "Jeffrey Epstein":
             popup = Popup(self.game)
@@ -109,6 +145,8 @@ class QuestManager:
             self.add_flag("efhk_discount")
 
             ret = popup.run()
+
+
 
 
         return True
