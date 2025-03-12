@@ -275,6 +275,17 @@ class GameState:
         gfx = self.gfx
         cam = self.cam
         anim_t0 = time.time()
+        aircraft = Aircraft(self)
+
+        speed = aircraft.speed
+
+        a = waypoints[0]
+        b = waypoints[-1]
+        distance = geodesic( (a[1],a[0]), (b[1],b[0]) ).km
+
+        if (distance / speed) < 4:
+            speed = distance / 4
+
         for i in range(1, len(waypoints)):
 
             a = waypoints[i-1]
@@ -284,7 +295,10 @@ class GameState:
 
             distance = geodesic( (a[1],a[0]), (b[1],b[0]) ).km
 
-            anim_dur = distance / 500.0 # km per second real-time
+            anim_dur = distance / speed # km per second real-time
+
+            # Make the animation last at least N seconds
+
             while anim_t1 - anim_t0 < anim_dur:
                 anim_t1 = time.time()
                 t = (anim_t1 - anim_t0) / anim_dur
