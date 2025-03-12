@@ -624,7 +624,7 @@ def choose_airport_from_map(game):
         gfx.fb.scanout()
 
         menu_fly_postpass(game)
-
+        game.print_status()
 
         if (cam.zoom <= 15.0):
             draw_large_airports(gfx.fb, cam, game.db.con)
@@ -632,12 +632,15 @@ def choose_airport_from_map(game):
         if (cam.zoom <= 7.5):
             draw_medium_airports(gfx.fb, cam, game.db.con)
 
-        gfx.win.addstr( gfx.fb.h//2, gfx.fb.w//2, "X" )
+        distance = game.db.icao_distance(game.airport, closest_icao)
+        distance_text = f"{distance:.0f} km"
+        gfx.win.addstr( gfx.fb.h//2,   gfx.fb.w//2, "X" )
+        gfx.win.addstr( gfx.fb.h//2+1, gfx.fb.w//2- len(distance_text)//2, distance_text )
 
         t_end = time.time()
 
         gfx.win.addstr(0,0,f"Rendered in {(t_end-t_start)*1000 : 0.2f} ms, zoom {cam.zoom}, lon {cam.gps[0]:.2f} lat {cam.gps[1]:.2f}")
-        gfx.win.addstr(2,0,f"Closest: {closest_icao}")
+        gfx.win.addstr(2,0,f"Target: {closest_icao}")
         gfx.win.refresh()
 
         # Input handling
