@@ -162,10 +162,16 @@ class Database():
         if len(result) != 1:
             return False
         return True
+    
+    def current_airport(self):
+        cur = self.con.cursor()
+        query = "SELECT airport FROM game WHERE id = 1"
+        cur.execute(query)
+        return cur.fetchone()[0]
 
     def icao_distance(self, icao_a, icao_b):
-        a = self.airport_yx_icao(icao_a);
-        b = self.airport_yx_icao(icao_b);
+        a = self.airport_yx_icao(icao_a)
+        b = self.airport_yx_icao(icao_b)
         return geodesic(a, b).km
 
     def airport_yx_icao(self, key):

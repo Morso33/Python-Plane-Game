@@ -4,7 +4,9 @@ roman = ["I", "II", "III", "IV", "V", "VI"]
 
 class Customer:
     def __init__(self, db):
-        self.name = f"Customer{random.randint(1000, 9999)}"
+        #use airport_data args: airport_id, continet
+        continent = db.airport_data(db.current_airport(), "continent")
+        self.name = Customer.generate_name(continent)
         self.db = db
         self.id = 0
 
@@ -138,3 +140,27 @@ class Customer:
         self.min_rp      = result[9]
 
         self.tier = roman[self.min_comfort-1]
+
+
+
+    def generate_name(continent: str) -> str:
+        
+        person_prefix = random.choice(["Mr.", "Mrs.", "Ms.", "Dr."])
+        person_suffix = random.choice(["Jr.", "Sr.", "II", "III", "IV"])
+
+        syllables = {
+            "AF": ["ba", "ka", "mo", "ntu", "za", "lo", "ngo", "ma"],
+            "AS": ["shi", "ching", "ji", "wen", "li", "tan", "yu", "chong"],
+            "EU": ["von", "de", "son", "ric", "ten", "dal", "mar"],
+            "NA": ["ken", "win", "ton", "ada", "mex", "ver", "san"],
+            "SA": ["san", "val", "rio", "gue", "bol", "ven", "per"],
+            "OC": ["roo", "tas", "que", "bar", "wool", "bir", "ban"],
+            "AN": ["ice", "ice", "ice", "ice", "ice", "ice", "ice"]
+        }
+        
+        if continent not in syllables:
+            print("Incorrect argument")
+        
+        name_parts = random.choices(syllables[continent], k=random.randint(2, 4))
+        name = "".join(name_parts).capitalize()
+        return f"{person_prefix} {name} {person_suffix}"
