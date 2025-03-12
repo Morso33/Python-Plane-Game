@@ -27,6 +27,11 @@ class Customer:
         cur = self.db.con.cursor()
         cur.execute("DELETE FROM customer WHERE id = ?", (self.id,))
 
+    def gen_payout(self, distance):
+        # Bit shift by tier makes payout double with each tier
+        rate = 4 << (self.min_comfort-1)
+        self.reward = round(distance * rate)
+
 
     def generate_tier1(self, origin_icao):
         self.origin = origin_icao
@@ -41,12 +46,9 @@ class Customer:
         distance = self.db.icao_distance(origin_icao,result[0])
 
         self.min_comfort = random.randint(1,2)
-        rate = 4.0 * self.min_comfort # Price per KM
-        self.reward = round(distance * rate)
         self.reward_rp = 1
 
-        self.min_rp = 0
-
+        self.gen_payout(distance)
 
     def generate_tier2(self, origin_icao):
         self.origin = origin_icao
@@ -59,11 +61,10 @@ class Customer:
         distance = self.db.icao_distance(origin_icao,result[0])
 
         self.min_comfort = random.randint(2,4)
-        rate = 4.0 * self.min_comfort # Price per KM
-        self.reward = round(distance * rate)
         self.reward_rp = 5
 
-        self.min_rp = 0
+        self.gen_payout(distance)
+
 
 
     def accept(self):
