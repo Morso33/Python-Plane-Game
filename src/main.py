@@ -12,6 +12,7 @@ from geopy.distance import great_circle
 from geopy.distance import geodesic
 
 from aircraft import Aircraft
+from portrait import portraits
 
 # Engine loop architecture
 #
@@ -23,6 +24,9 @@ from aircraft import Aircraft
 # don't need that complexity here.
 # Arcane procedual programming techniques ;)
 #
+
+
+
 
 roman = ["I", "II", "III", "IV", "V", "VI"]
 
@@ -815,6 +819,7 @@ def main():
                     "+ $100,000,000",
                     "Become opiskelija",
                     "Fly to New York",
+                    "View portraits",
                     "",
                     "Return"])
                 if action == "Reset":
@@ -834,6 +839,13 @@ def main():
                     impopup(game, ["You are now broke."])
                     break
 
+                elif action == "View portraits":
+                    who = impopup(game, [], portraits.keys())
+                    popup = Popup(game)
+                    popup.set_portrait(who)
+                    popup.add_text(f"This is the portrait of {who}.")
+                    popup.run()
+                    break
                 elif action == "+ $10,000,000":
                     game.money += 10_000_000
                     impopup(game, ["$10 million added"], ["Ok"])

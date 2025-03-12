@@ -1,6 +1,7 @@
 import textwrap
 import curses
 import time
+from portrait import portraits
 
 # View menu_fly() function in main.py for a simple usage example
 
@@ -16,6 +17,11 @@ class Popup:
     def __init__(self, game):
         self.game = game
         self.w = 40
+
+        self.portrait_w = 0
+        self.portrait = []
+
+
         self.h = 10
         self.txt = []
         self.cmd = []
@@ -40,6 +46,12 @@ class Popup:
         self.ret.append(payload)
         return
 
+    def set_portrait(self, name):
+        if name in portraits:
+            self.portrait = portraits[name]
+            self.portrait_w = len(self.portrait[0])
+
+    # This function is bit of a mess, but will do for now
     def run(self):
         game = self.game
         gfx  = game.gfx
@@ -49,7 +61,9 @@ class Popup:
 
         sel = 0
         w = self.w
-        h = 3 + len(self.txt) + len(self.cmd)
+        pw = self.portrait_w
+        w += pw
+        h = 3 + max(len(self.txt) + len(self.cmd), len(self.portrait)-1)
         while True:
             gfx.fb.update()
             if h >= gfx.fb.h or w >= gfx.fb.w:
@@ -77,9 +91,13 @@ class Popup:
 
             gfx.win.addstr(y, x, str_edge)
             y+=1
+
+            py = y
+
+
             for line in self.txt:
                 gfx.win.addstr(y, x, str_panel)
-                gfx.win.addstr(y, x+2, line)
+                gfx.win.addstr(y, x+2+pw, line)
                 y+=1
 
             gfx.win.addstr(y, x, str_panel)
@@ -88,12 +106,22 @@ class Popup:
             for i in range(len(self.cmd)):
                 line = self.cmd[i]
                 gfx.win.addstr(y, x, str_panel)
-                gfx.win.addstr(y, x+2, ("> " if i==sel else "  ") + line)
+                gfx.win.addstr(y, x+2+pw, ("> " if i==sel else "  ") + line)
                 y+=1
 
             gfx.win.addstr(y, x, str_panel)
             y+=1
+
+            while y < py+len(self.portrait):
+                gfx.win.addstr(y, x, str_panel)
+                y+=1
+
             gfx.win.addstr(y, x, str_edge)
+
+
+            for i in range(len(self.portrait)):
+                gfx.win.addstr(py+i, x+1, self.portrait[i])
+
 
             gfx.win.refresh()
 

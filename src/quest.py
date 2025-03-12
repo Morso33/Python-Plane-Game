@@ -84,22 +84,16 @@ class QuestManager:
         self.update()
         if customer.name == "Jeffrey Epstein":
             popup = Popup(self.game)
-            popup.w = 50
-            popup.add_text('        .                          ')
-            popup.add_text('   ::  =::..:       Jeffrey Epstein')
-            popup.add_text('  :**:.   ..-*==    ')
-            popup.add_text('   -::...:::-=++:   I need trustworthy pilots')
-            popup.add_text('    -:::.:::-=*+:   like yourself. Flying my')
-            popup.add_text('  :=-*#%****+==+*   customers pays well, but')
-            popup.add_text('  ..*@@%* %@@*%#:   you must not talk.')
-            popup.add_text('  .:. ::. ==***#                   ')
-            popup.add_text('  =+*-=:-=*=:=**    Want to work for me?')
-            popup.add_text('   =-%..=%#-#=*.                   ')
-            popup.add_text('   :=*=#*#%@%#:....                ')
-            popup.add_text('   =* :=%%##*=:::::                ')
-            popup.add_text(' ::+=.+:.=-+#%*=-::                ')
-            popup.add_text('  :-*+*%%%%%%%*+*=-                ')
-            popup.add_text('  ..--=#%%%%%#*+===                ')
+
+            popup.set_portrait(customer.name)
+            popup.add_text(customer.name)
+            popup.add_text("")
+            popup.add_text(
+                "I need trustworthy pilots like yourself. Flying my "+
+                "customers pays well, but you must not talk. \n\n"+
+                "Want to work for me?"
+            )
+
             popup.add_option("Accept")
             popup.add_option("Decline")
             ret = popup.run()
@@ -108,23 +102,14 @@ class QuestManager:
                 self.add_flag("je_accept")
                 customer.reward += 100000
                 popup = Popup(self.game)
-                popup.w = 50
-                popup.add_text('        .                          ')
-                popup.add_text('   ::  =::..:       Jeffrey Epstein')
-                popup.add_text('  :**:.   ..-*==    ')
-                popup.add_text('   -::...:::-=++:   My customers look forward')
-                popup.add_text('    -:::.:::-=*+:   to flying with you. Here\'s')
-                popup.add_text('  :=-*#%****+==+*   a $100k as a tip.')
-                popup.add_text('  ..*@@%* %@@*%#:   ')
-                popup.add_text('  .:. ::. ==***#                   ')
-                popup.add_text('  =+*-=:-=*=:=**    ')
-                popup.add_text('   =-%..=%#-#=*.                   ')
-                popup.add_text('   :=*=#*#%@%#:....                ')
-                popup.add_text('   =* :=%%##*=:::::                ')
-                popup.add_text(' ::+=.+:.=-+#%*=-::                ')
-                popup.add_text('  :-*+*%%%%%%%*+*=-                ')
-                popup.add_text('  ..--=#%%%%%#*+===                ')
-                popup.add_option("Continue")
+                popup.set_portrait(customer.name)
+                popup.add_text(customer.name)
+                popup.add_text("")
+                popup.add_text(
+                    "Excellent! My customers look forward to flying with "+
+                    "you. Here's a $100k tip."
+                )
+
                 ret = popup.run()
 
             return True
