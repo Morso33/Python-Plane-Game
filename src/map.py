@@ -153,8 +153,19 @@ def compute_geodesic(gps_a, gps_b):
     a = gps_to_usphere(gps_a)
     b = gps_to_usphere(gps_b)
 
+
+    map_distance = math.sqrt( (gps_a[0]-gps_a[1])**2 + (gps_b[0]-gps_b[1])**2 );
+
+    if map_distance < 15:
+        waypoints.append(gps_a)
+        waypoints.append(gps_b)
+        return waypoints
+
     # Resolution of geodesic
-    steps = 15
+    steps = 5
+
+    if map_distance > 45:
+        steps = 50
 
     for step in range(0, steps+1):
         t = (step/steps)
