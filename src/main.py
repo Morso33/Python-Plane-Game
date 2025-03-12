@@ -840,11 +840,14 @@ def main():
                     break
 
                 elif action == "View portraits":
-                    who = impopup(game, [], portraits.keys())
-                    popup = Popup(game)
-                    popup.set_portrait(who)
-                    popup.add_text(f"This is the portrait of {who}.")
-                    popup.run()
+                    while True:
+                        who = impopup(game, [], portraits.keys())
+                        if who == "Return":
+                            break
+                        popup = Popup(game)
+                        popup.set_portrait(who)
+                        popup.add_text(f"{who}")
+                        popup.run()
                     break
                 elif action == "+ $10,000,000":
                     game.money += 10_000_000
