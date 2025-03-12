@@ -49,6 +49,7 @@ class QuestManager:
         aircraft = Aircraft(self.game)
         self.spawn_stubb(aircraft)
         self.spawn_epstein(aircraft)
+        self.spawn_trump(aircraft)
 
     def tutorial_quest(self):
         popup = Popup(self.game)
@@ -77,12 +78,20 @@ class QuestManager:
 
 
     def accepted_customer(self, customer):
+
         if customer.name == tutorial_dude:
             popup = Popup(self.game)
             popup.w += 7
             popup.set_portrait("Businessman")
             popup.add_text(f"{tutorial_dude}\n")
             popup.add_text("Great. Now fly me to my destination by selecting it from the map, or directly from the 'Fly to destination' menu.")
+            popup.run()
+
+        if customer.name == "Donald Trump":
+            popup = Popup(self.game)
+            popup.set_portrait("Donald Trump")
+            popup.add_text(f"Donald Trump\n")
+            popup.add_text("Fly me to China. I need to have a word with president Xi.")
             popup.run()
 
 
@@ -101,6 +110,16 @@ class QuestManager:
             popup.run()
             self.add_flag("EFHK_hangar")
             impopup(self.game, ["You have unlocked the Hangar at Helsinki Airport (EFHK)"])
+
+        if customer.name == "Donald Trump":
+            popup = Popup(self.game)
+            popup.set_portrait("Donald Trump")
+            popup.add_text(f"Donald Trump\n")
+            popup.add_text("I like your jet. You're hired.")
+            popup.run()
+            impopup(self.game, ["You have won the game."])
+            customer.reward = 1_000_000_000
+
 
         if customer.name == "Jeffrey Epstein":
             popup = Popup(self.game)
@@ -189,6 +208,26 @@ class QuestManager:
         customer.destination = "TIST"
         customer.reward      = 50000
         customer.reward_rp   = 10
+        customer.min_comfort = min_comfort
+        customer.save()
+        self.add_flag(flag)
+
+    def spawn_trump(self, aircraft):
+        flag = "trump_spawned"
+        min_comfort = 5
+
+        if (self.has_flag(flag)):
+            return
+
+        if aircraft.comfort < min_comfort:
+            return
+
+        customer = Customer(self.db)
+        customer.name        = "Donald Trump"
+        customer.origin      = "KPBI"
+        customer.destination = "ZBAA"
+        customer.reward      = 1000000
+        customer.reward_rp   = 100
         customer.min_comfort = min_comfort
         customer.save()
         self.add_flag(flag)
