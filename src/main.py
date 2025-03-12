@@ -918,7 +918,7 @@ def main():
         elif action == "Look for customers":
             menu_find_customers(game)
         elif action == "Map":
-            choose_airport_from_map(game)
+            game.fly_to( choose_airport_from_map(game) )
         elif action == "Hangar":
             menu_hangar(game)
         elif action == "Refuel":

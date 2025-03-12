@@ -97,6 +97,7 @@ class QuestManager:
                 ret = popup.run()
 
             return True
+        return True
 
 
 
