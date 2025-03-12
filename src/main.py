@@ -412,12 +412,13 @@ def menu_find_customers(game):
 
 
 def menu_fly_postpass(game):
-    customers = game.db.accepted_customers()
-    i = 0
-    for customer in customers:
-        i+=1
+    for customer in game.db.accepted_customers():
         gps = game.db.airport_xy_icao(customer.destination)
         put_gps_text(game.gfx.fb, game.cam, gps, f"● {customer.destination}($)")
+    for customer in game.db.quest_customers():
+        gps = game.db.airport_xy_icao(customer.origin)
+        put_gps_text(game.gfx.fb, game.cam, gps, f"● {customer.origin}(?)")
+
 
 def menu_fly_prepass(game):
     customers = game.db.accepted_customers()
@@ -847,6 +848,8 @@ def main():
         popup.add_text(f"Range:              {aircraft.range:0.1f} km" )
         popup.add_text(f"Comfort class:      {aircraft.comfort_pretty}" )
         popup.add_text(f"")
+
+        popup.add_option("Map")
         popup.add_option("Look for customers")
         popup.add_option("Fly to destination")
         #popup.add_option("View your customers") TODO ?
@@ -916,8 +919,8 @@ def main():
 
         elif action == "Look for customers":
             menu_find_customers(game)
-        elif action == "View your customers":
-            pass
+        elif action == "Map":
+            choose_airport_from_map(game)
         elif action == "Hangar":
             menu_hangar(game)
         elif action == "Refuel":

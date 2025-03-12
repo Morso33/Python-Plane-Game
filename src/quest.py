@@ -45,6 +45,10 @@ class QuestManager:
 
             self.tutorial_quest()
 
+        aircraft = Aircraft(self.game)
+        self.spawn_stubb(aircraft)
+        self.spawn_epstein(aircraft)
+
     def tutorial_quest(self):
         popup = Popup(self.game)
         popup.add_text("Welcome! This is a placeholder for tutorial quest.")
@@ -58,27 +62,7 @@ class QuestManager:
 
         municipality = self.db.airport_municipality(self.game.airport)
 
-        if self.has_flag("je_new_york") and municipality == "New York":
-            self.del_flag("je_new_york")
 
-            customer = Customer(self.db)
-            customer.origin      = icao
-            customer.name        = "Jeffrey Epstein"
-            customer.destination = "TIST"
-            customer.reward = 50000
-            customer.save()
-
-        if (not self.has_flag("stubb_cooldown")) and icao == "EFHK" and aircraft.comfort >= 3:
-            self.add_flag("stubb_cooldown")
-
-            customer = Customer(self.db)
-            customer.origin      = icao
-            customer.name        = "Alexander Stubb"
-            customer.destination = "EBBR"
-            customer.reward      = 20000
-            customer.reward_rp   = 10
-            customer.min_comfort = 3
-            customer.save()
 
     def completed_customer_flight(self, customer):
         self.update()
@@ -116,4 +100,39 @@ class QuestManager:
 
 
 
-        return True
+    def spawn_stubb(self, aircraft):
+        flag = "stubb_spawned"
+        if (self.has_flag(flag)):
+            return
+
+        if aircraft.comfort < 3:
+            return
+
+        customer = Customer(self.db)
+        customer.name        = "Alexander Stubb"
+        customer.origin      = "EFHK"
+        customer.destination = "EBBR"
+        customer.reward      = 20000
+        customer.reward_rp   = 10
+        customer.min_comfort = 3
+        customer.save()
+        self.add_flag(flag)
+
+    def spawn_epstein(self, aircraft):
+        flag = "epstein_spawned"
+        if (self.has_flag(flag)):
+            return
+
+        if aircraft.comfort < 3:
+            return
+
+        customer = Customer(self.db)
+        customer.name        = "Jeffrey Epstein"
+        customer.origin      = "KJFK"
+        customer.destination = "TIST"
+        customer.reward      = 50000
+        customer.reward_rp   = 10
+        customer.min_comfort = 3
+        customer.save()
+        self.add_flag(flag)
+

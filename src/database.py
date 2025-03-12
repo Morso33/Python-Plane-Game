@@ -296,7 +296,7 @@ class Database():
 
     def customers_from_airport(self, icao):
         cur = self.con.cursor()
-        query = f"SELECT id FROM customer WHERE origin = ?"
+        query = f"SELECT id FROM customer WHERE origin = ? ORDER BY reward_rp DESC LIMIT 5"
         cur.execute(query, (icao,))
         result = cur.fetchall()
 
@@ -312,6 +312,21 @@ class Database():
     def accepted_customers(self):
         cur = self.con.cursor()
         query = f"SELECT id FROM customer WHERE accepted = 1"
+        cur.execute(query, )
+        result = cur.fetchall()
+
+        customers = []
+
+        for (customer_id,) in result:
+            c = Customer(self)
+            c.load(customer_id)
+            customers.append(c)
+
+        return customers
+
+    def quest_customers(self):
+        cur = self.con.cursor()
+        query = f"SELECT id FROM customer WHERE reward_rp > 4 AND accepted = 0"
         cur.execute(query, )
         result = cur.fetchall()
 

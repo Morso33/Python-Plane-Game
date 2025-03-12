@@ -46,7 +46,7 @@ class Customer:
         distance = self.db.icao_distance(origin_icao,result[0])
 
         self.min_comfort = random.randint(1,2)
-        self.reward_rp = 1
+        self.reward_rp = self.min_comfort
 
         self.gen_payout(distance)
 
@@ -61,7 +61,7 @@ class Customer:
         distance = self.db.icao_distance(origin_icao,result[0])
 
         self.min_comfort = random.randint(2,4)
-        self.reward_rp = 5
+        self.reward_rp = self.min_comfort
 
         self.gen_payout(distance)
 
