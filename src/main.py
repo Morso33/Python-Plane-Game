@@ -121,6 +121,11 @@ class GameState:
 
         self.win.addstr(row, x, text.center(w))
 
+    def money_pretty(self, money=None):
+        if money == None:
+            money = self.money
+        return "${:,.0f}".format(money)
+
     def print_status(self):
         win = self.win
         w = self.status_w
@@ -141,7 +146,7 @@ class GameState:
         self.win.addstr(2, x, km)
         self.win.addstr(2, x+(w-len(rp)), rp)
 
-        self.status(3, f"${self.money}")
+        self.status(3, self.money_pretty())
 
 
     def fly_to(self, icao):
@@ -190,9 +195,9 @@ class GameState:
         popup.add_text(f"{airport.name}")
         popup.add_text(f"{airport.municipality}, {airport.iso_region}, {airport.continent}")
         popup.add_text(f"")
-        popup.add_text(f"${self.money}, {aircraft.fuel:.1f} / {aircraft.fuel_max:.1f} l")
+        popup.add_text(f"{self.money_pretty()}, {aircraft.fuel:.1f} / {aircraft.fuel_max:.1f} l")
         popup.add_text(f"")
-        popup.add_text(f"Fees:            ${airport.fees}")
+        popup.add_text(f"Fees:            {self.money_pretty(airport.fees)}")
         popup.add_text(f"Fuel required:   {fuel:.1f} l")
         #popup.add_text(f"Current fuel:    {aircraft.fuel:.1f} l (0%)")
         popup.add_text(f"Flight distance: {distance:.1f} km")
@@ -387,7 +392,7 @@ def menu_find_customers(game):
         popup.add_text(f"{airport.name}")
         popup.add_text(f"{airport.type_pretty} airport")
         popup.add_text(f"{int(distance)} km {time:.1f} h {liters:.1f} l")
-        popup.add_text(f"+ ${customer.reward} {customer.reward_rp}rp")
+        popup.add_text(f"+ {game.money_pretty(customer.reward)} {customer.reward_rp}rp")
         popup.add_text(f"")
 
         popup.add_option(f"Board customer #{i}", i)
@@ -463,7 +468,7 @@ def menu_hangar(game):
         aircraft = Aircraft(game, ac[0])
 
         label = f"{aircraft.name:<19} | "
-        price = f"${aircraft.price}"
+        price = f"{game.money_pretty(aircraft.price)}"
 
         if aircraft.owned == True:
             price = "Owned"
@@ -718,12 +723,12 @@ def menu_upgrades(game):
 
         new_tier = roman[aircraft.comfort] # +1 but because 0-index -1 so 0
 
-        price_label = "Purchased" if aircraft.has_upgrade_comfort  else f"${comfort_cost}"
+        price_label = "Purchased" if aircraft.has_upgrade_comfort  else f"{game.money_pretty(comfort_cost)}"
         popup.add_text(f"Comfort Upgrade      {price_label}")
         popup.add_text(f"Increases the comfort rating of your aircraft by one.")
         popup.add_text("")
 
-        price_label = "Purchased" if aircraft.has_upgrade_efficiency  else f"${efficiency_cost}"
+        price_label = "Purchased" if aircraft.has_upgrade_efficiency  else f"{game.money_pretty(efficiency_cost)}"
         popup.add_text(f"Efficiency Upgrade   {price_label}")
         popup.add_text(f"Reduces fuel consumption by -10% and CO² emissions by -20%.")
 
@@ -772,7 +777,7 @@ def menu_refuel(game):
     time        = fuel / aircraft.fuel_lph
     co2_refund  = (time * aircraft.co2_kgph) * 0.75
 
-    popup.add_text(f"Money:       ${game.money}")
+    popup.add_text(f"Money:       {game.money_pretty()}")
     popup.add_text(f"Fuel:        {aircraft.fuel:.1f} / {aircraft.fuel_max:.1f} liters")
     popup.add_text(f"\nFuel prices:")
     popup.add_text(f"Fossil:      ${price_per_liter:.2f} / liter")
@@ -781,8 +786,8 @@ def menu_refuel(game):
     if has_discount:
         popup.add_text("\n-50% discount applied")
 
-    popup.add_option(f"Refuel for ${price}", "buy")
-    popup.add_option(f"Refuel for ${eco_price} (-{co2_refund/1000:.1f} tCO²)", "buyeco")
+    popup.add_option(f"Refuel for {game.money_pretty(price)}", "buy")
+    popup.add_option(f"Refuel for {game.money_pretty(eco_price)} (-{co2_refund/1000:.1f} tCO²)", "buyeco")
     popup.add_option("Return")
 
     ret = popup.run()
@@ -833,7 +838,7 @@ def main():
                 popup = Popup(game)
                 popup.w = 60
                 popup.add_text(f"You have completed {customer.name}'s flight.\n")
-                popup.add_text(f"+ ${customer.reward}")
+                popup.add_text(f"+ {game.money_pretty(customer.reward)}")
                 popup.add_text(f"+ {customer.reward_rp} rp")
                 popup.run()
                 game.money += customer.reward
@@ -848,7 +853,7 @@ def main():
         popup.add_text(f"{airport.municipality} ({airport.continent} {airport.iso_region})" )
         popup.add_text(f"{airport.type_pretty} airport" )
         popup.add_text(f"" )
-        popup.add_text(f"Money:              ${game.money}" )
+        popup.add_text(f"Money:              {game.money_pretty()}" )
         popup.add_text(f"CO² emissions:      {game.co2:0.0f} kg" )
         popup.add_text(f"Reputation:         {game.rp} rp" )
         popup.add_text(f"" )
