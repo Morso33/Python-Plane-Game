@@ -76,6 +76,22 @@ class QuestManager:
 
         municipality = self.db.airport_municipality(self.game.airport)
 
+        if self.game.co2 > 1_000_000 and (not self.has_flag("activist_attack")):
+            self.add_flag("activist_attack")
+            popup = Popup(self.game)
+            popup.set_portrait("Activist")
+            popup.add_text(f"Activist attack!\n")
+            popup.add_text("Climate activists are upset about your CO² emissions, and have vandalized your aircraft.")
+            popup.add_option("Plant trees (-$5,000, -1000 tCO²)", 1)
+            popup.add_option("Do nothing (-20rp)", 2)
+            ret = popup.run()
+
+            if ret == 1:
+                self.game.money -= 5000
+                self.game.co2   -= 1_000_000
+            else:
+                self.game.rp    -= 20
+
 
     def accepted_customer(self, customer):
 

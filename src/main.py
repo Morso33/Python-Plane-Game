@@ -888,8 +888,9 @@ def main():
                     "Freecam",
                     "Reset",
                     "Quest flags",
-                    "+ $10,000,000",
+                    "+ $1,000,000",
                     "+ $100,000,000",
+                    "+ tCO²",
                     "Become opiskelija",
                     "Fly to New York",
                     "View portraits",
@@ -922,10 +923,12 @@ def main():
                         popup.add_text(f"{who}")
                         popup.run()
                     break
-                elif action == "+ $10,000,000":
-                    game.money += 10_000_000
-                    impopup(game, ["$10 million added"], ["Ok"])
+                elif action == "+ $1,000,000":
+                    game.money += 1_000_000
+                    impopup(game, ["$1 million added"], ["Ok"])
 
+                elif action == "+ tCO²":
+                    game.co2 += 1_000_000
                 elif action == "+ $100,000,000":
                     game.money += 100_000_000
                     impopup(game, ["$100 million added"], ["Ok"])
