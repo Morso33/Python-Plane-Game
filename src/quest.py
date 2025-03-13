@@ -48,7 +48,6 @@ class QuestManager:
 
         aircraft = Aircraft(self.game)
         self.spawn_stubb(aircraft)
-        self.spawn_epstein(aircraft)
         self.spawn_trump(aircraft)
 
     def tutorial_quest(self):
@@ -138,36 +137,6 @@ class QuestManager:
             customer.reward = 1_000_000_000
 
 
-        if customer.name == "Jeffrey Epstein":
-            popup = Popup(self.game)
-
-            popup.set_portrait(customer.name)
-            popup.add_text(customer.name)
-            popup.add_text("")
-            popup.add_text(
-                "I need trustworthy pilots like yourself. Flying my "+
-                "customers pays well, but you must not talk. \n\n"+
-                "Want to work for me?"
-            )
-
-            popup.add_option("Accept")
-            popup.add_option("Decline")
-            ret = popup.run()
-
-            if (ret == "Accept"):
-                self.add_flag("epstein_accept")
-                customer.reward += 100000
-                popup = Popup(self.game)
-                popup.set_portrait(customer.name)
-                popup.add_text(customer.name)
-                popup.add_text("")
-                popup.add_text(
-                    "Excellent! My customers look forward to flying with "+
-                    "you. Here's a $100k tip."
-                )
-
-                ret = popup.run()
-
         if customer.name == "Alexander Stubb":
             popup = Popup(self.game)
 
@@ -204,26 +173,6 @@ class QuestManager:
         customer.destination = "EFHK"
         customer.origin      = "EBBR"
         customer.reward      = 20000
-        customer.reward_rp   = 10
-        customer.min_comfort = min_comfort
-        customer.save()
-        self.add_flag(flag)
-
-    def spawn_epstein(self, aircraft):
-        flag = "epstein_spawned"
-        min_comfort = 4
-
-        if (self.has_flag(flag)):
-            return
-
-        if aircraft.comfort < min_comfort:
-            return
-
-        customer = Customer(self.db)
-        customer.name        = "Jeffrey Epstein"
-        customer.origin      = "KJFK"
-        customer.destination = "TIST"
-        customer.reward      = 50000
         customer.reward_rp   = 10
         customer.min_comfort = min_comfort
         customer.save()
