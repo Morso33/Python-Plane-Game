@@ -146,7 +146,7 @@ class Customer:
     def generate_name(continent: str) -> str:
         
         person_prefix = random.choice(["Mr.", "Mrs.", "Ms.", "Dr."])
-        person_suffix = random.choice(["Jr.", "Sr.", "II", "III", "IV"])
+        person_suffix = random.choice(["Jr.", "Sr."])
 
         syllables = {
             "AF": ["ba", "ka", "mo", "ntu", "za", "lo", "ngo", "ma"],

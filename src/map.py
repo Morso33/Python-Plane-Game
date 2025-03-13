@@ -153,7 +153,6 @@ def compute_geodesic(gps_a, gps_b):
     a = gps_to_usphere(gps_a)
     b = gps_to_usphere(gps_b)
 
-
     map_distance = math.sqrt( (gps_a[0]-gps_b[0])**2 + (gps_b[1]-gps_b[1])**2 );
 
     if map_distance < 7.5:
