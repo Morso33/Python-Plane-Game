@@ -81,9 +81,10 @@ class QuestManager:
             popup = Popup(self.game)
             popup.set_portrait("Activist")
             popup.add_text(f"Activist attack!\n")
-            popup.add_text("Climate activists are upset about your CO² emissions, and have vandalized your aircraft.")
+            popup.add_text("Climate activists are upset about your CO² emissions, and have vandalized your aircraft. They have caused $2,000 of damage.")
             popup.add_option("Plant trees (-$5,000, -1000 tCO²)", 1)
             popup.add_option("Do nothing (-20rp)", 2)
+            self.game.money -= 2000
             ret = popup.run()
 
             if ret == 1:
@@ -200,8 +201,8 @@ class QuestManager:
 
         customer = Customer(self.db)
         customer.name        = "Alexander Stubb"
-        customer.origin      = "EFHK"
-        customer.destination = "EBBR"
+        customer.destination = "EFHK"
+        customer.origin      = "EBBR"
         customer.reward      = 20000
         customer.reward_rp   = 10
         customer.min_comfort = min_comfort
