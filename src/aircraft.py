@@ -1,6 +1,6 @@
 import random
 
-roman = ["I", "II", "III", "IV", "V", "VI"]
+roman = ["I", "II", "III", "IV", "V", "VI", "VII"]
 
 class Aircraft:
     def __init__(self, game, aircraft_id=None):

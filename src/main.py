@@ -28,7 +28,7 @@ from portrait import portraits
 
 
 
-roman = ["I", "II", "III", "IV", "V", "VI"]
+roman = ["I", "II", "III", "IV", "V", "VI", "VII"]
 
 def create_progress_bar(progress: float, lenght: int) -> str:
     progress = max(0.0, min(100.0, progress))
