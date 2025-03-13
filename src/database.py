@@ -302,7 +302,7 @@ class Database():
 
     def customers_from_airport(self, icao):
         cur = self.con.cursor()
-        query = f"SELECT id FROM customer WHERE origin = ? ORDER BY reward_rp DESC LIMIT 5"
+        query = f"SELECT id FROM customer WHERE origin = ? ORDER BY reward_rp DESC LIMIT 4"
         cur.execute(query, (icao,))
         result = cur.fetchall()
 

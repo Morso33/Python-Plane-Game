@@ -274,7 +274,7 @@ class GameState:
                 customers_tier1 = random.randint(1,3)
                 customers_tier2 = 0
             case "large_airport":
-                customers_tier1 = random.randint(1,2)
+                customers_tier1 = random.randint(0,1)
                 customers_tier2 = random.randint(1,3)
 
 
