@@ -691,16 +691,6 @@ def choose_airport_from_map(game):
             cam.zoom *= 0.5
 
 
-def menu_game_start(game):
-    popup = Popup(game)
-    if game.quests.has_flag("game_start"):
-        popup.add_option("Continue")
-
-    popup.add_option("New Game")
-    ret = popup.run()
-    if ret == "New Game":
-        game.db.reset()
-
 
 def menu_upgrades(game):
     while True:
@@ -816,6 +806,18 @@ def menu_refuel(game):
 
 
 
+def menu_game_start(game):
+    popup = Popup(game)
+
+    if game.quests.has_flag("game_start"):
+        popup.add_option("Continue")
+
+    popup.add_option("New Game")
+    ret = popup.run()
+
+    if ret == "New Game":
+        game.db.reset()
+
 
 def main():
     game = GameState()
@@ -896,18 +898,23 @@ def main():
                     "View portraits",
                     "",
                     "Return"])
+
                 if action == "Reset":
                     game.db.reset()
                     game.load()
                     impopup(game, ["Database reset"], ["Ok"])
                     break
+
                 elif action == "Freecam":
                     freecam(game)
+
                 elif action == "Fly to New York":
                     game.fly_to("KJFK")
                     break
+
                 elif action == "Quest flags":
                     impopup(game, game.quests.all_flags(), ["Return"])
+
                 elif action == "Become opiskelija":
                     game.money = 0
                     impopup(game, ["You are now broke."])
@@ -923,18 +930,20 @@ def main():
                         popup.add_text(f"{who}")
                         popup.run()
                     break
+
                 elif action == "+ $1,000,000":
                     game.money += 1_000_000
                     impopup(game, ["$1 million added"], ["Ok"])
 
                 elif action == "+ tCO²":
                     game.co2 += 1_000_000
+
                 elif action == "+ $100,000,000":
                     game.money += 100_000_000
                     impopup(game, ["$100 million added"], ["Ok"])
+
                 else:
                     break
-
 
         elif action == "Look for customers":
             menu_find_customers(game)
